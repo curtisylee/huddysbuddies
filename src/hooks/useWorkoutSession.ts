@@ -11,6 +11,8 @@ import {
   announceExercise,
   announceTransition,
   announceSetRest,
+  announceRestCountdown,
+  announceSetStart,
   announceWorkoutComplete,
   announceWorkoutStart,
 } from '../lib/coachCopy'
@@ -141,13 +143,32 @@ export function useWorkoutSession(
     const newPhase = phaseSecondsLeftRef.current - 1
     setPhaseSecondsLeft(newPhase)
 
-    // Voice countdown for hold exercises
     if (p === 'exercising-set') {
       const ex = exercises[currentExerciseIndexRef.current]
-      if (ex && ex.reps === 'hold') {
-        if (newPhase === 10 || newPhase === 5 || (newPhase <= 3 && newPhase > 0)) {
-          say(String(newPhase))
+      if (ex) {
+        if (ex.reps === 'hold') {
+          // Hold exercise: countdown the remaining seconds
+          if (newPhase === 20 || newPhase === 15 || newPhase === 10) {
+            say(String(newPhase))
+          } else if (newPhase <= 5 && newPhase > 0) {
+            say(String(newPhase))
+          }
+        } else {
+          // Rep exercise: count each completed rep
+          const totalSetSeconds = computeSetSeconds(ex)
+          const elapsed = totalSetSeconds - newPhase
+          if (elapsed > 0 && elapsed % SECONDS_PER_REP === 0) {
+            const repNum = elapsed / SECONDS_PER_REP
+            say(String(repNum))
+          }
         }
+      }
+    }
+
+    // Rest countdown: "Next set starting in 5, 4, 3, 2, 1"
+    if (p === 'exercising-rest') {
+      if (newPhase <= 5 && newPhase > 0) {
+        say(announceRestCountdown(newPhase))
       }
     }
 
@@ -182,7 +203,7 @@ export function useWorkoutSession(
         const sec = computeSetSeconds(ex)
         setPhaseSecondsLeft(sec)
         setPhase('exercising-set')
-        say(`Set ${nextSet}. Go!`)
+        say(announceSetStart(nextSet))
       }
     } else if (p === 'transition') {
       // Transition over — start next exercise
