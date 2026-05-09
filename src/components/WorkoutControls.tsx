@@ -5,7 +5,6 @@ type Props = {
   onStart: () => void
   onPause: () => void
   onResume: () => void
-  onRestart: () => void
 }
 
 function PlayIcon() {
@@ -32,12 +31,11 @@ export function WorkoutControls({
   onStart,
   onPause,
   onResume,
-  onRestart,
 }: Props) {
   if (phase === 'complete') {
     return (
       <div className="workout-controls">
-        <button type="button" className="ios-btn ios-btn-tint lg" onClick={onRestart}>
+        <button type="button" className="ios-btn ios-btn-tint lg" onClick={onStart}>
           START AGAIN
         </button>
       </div>
@@ -55,7 +53,7 @@ export function WorkoutControls({
   }
 
   return (
-    <div className="workout-controls two-col">
+    <div className="workout-controls">
       {paused ? (
         <button
           type="button"
@@ -75,9 +73,6 @@ export function WorkoutControls({
           <PauseIcon />
         </button>
       )}
-      <button type="button" className="ios-btn lg workout-restart-btn" onClick={onRestart}>
-        RESTART
-      </button>
     </div>
   )
 }

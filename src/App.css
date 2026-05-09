@@ -46,9 +46,8 @@
 }
 
 .brand-icon svg {
-  width: 19px;
-  height: 19px;
-  fill: #fff;
+  width: 22px;
+  height: 22px;
 }
 
 .brand-text {
@@ -742,77 +741,152 @@
 }
 
 /* ================================================================== */
-/* WORKOUT TIMER                                                       */
+/* WORKOUT TIMELINE                                                    */
 /* ================================================================== */
-.workout-timer-container {
-  margin: 24px auto 0;
+.workout-timeline-wrap {
+  margin: 20px 0 0;
+  padding: 0 4px;
+  user-select: none;
 }
 
-.workout-timer-wrap {
-  width: 160px;
-  height: 160px;
-  position: relative;
-  display: grid;
-  place-items: center;
-  margin: 0 auto;
+.timeline-labels {
+  display: flex;
+  margin-bottom: 6px;
+  gap: 0;
 }
 
-.workout-timer-svg {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  transform: rotate(-90deg);
-  filter: drop-shadow(0 0 12px rgba(10, 132, 255, 0.3));
+.timeline-label {
+  font-size: 0.58rem;
+  font-weight: 600;
+  color: var(--label-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  text-align: center;
+  overflow: hidden;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
-.workout-timer-bg {
-  fill: none;
-  stroke: var(--fill);
-  stroke-width: 14;
-  stroke-linecap: round;
-}
-
-.workout-timer-fill {
-  fill: none;
-  stroke-width: 14;
-  stroke-linecap: round;
-  transition: stroke-dashoffset 1s linear;
-}
-
-.workout-timer-inner {
+.timeline-bar {
   position: relative;
   display: flex;
-  flex-direction: column;
-  align-items: center;
+  height: 22px;
+  border-radius: 11px;
+  overflow: visible;
+  background: var(--fill);
+  gap: 2px;
 }
 
-.workout-timer-time {
-  font-size: 2.2rem;
-  font-weight: 800;
-  letter-spacing: -0.05em;
-  color: var(--label);
-  line-height: 1;
-  font-variant-numeric: tabular-nums;
+.timeline-seg {
+  flex-shrink: 0;
+  height: 100%;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  border-radius: 4px;
+  background: var(--seg-color, #666);
+  transition: opacity 0.3s ease, box-shadow 0.3s ease;
+  min-width: 4px;
 }
 
-.workout-timer-time.urgent {
-  color: #ff453a;
-  animation: timerPulse 1s ease-in-out infinite;
+.timeline-seg:focus-visible {
+  outline: 2px solid var(--tint);
+  outline-offset: 2px;
 }
 
-@keyframes timerPulse {
+.timeline-seg-upcoming {
+  opacity: 0.25;
+}
+
+.timeline-seg-done {
+  opacity: 0.5;
+  filter: saturate(0.6);
+}
+
+.timeline-seg-active {
+  opacity: 1;
+  box-shadow: 0 0 12px var(--seg-color, #666);
+  animation: segPulse 1.5s ease-in-out infinite;
+}
+
+@keyframes segPulse {
+  0%, 100% { box-shadow: 0 0 8px var(--seg-color, #666); }
+  50% { box-shadow: 0 0 20px var(--seg-color, #666); }
+}
+
+.timeline-gap {
+  flex-shrink: 0;
+  height: 100%;
+  background: transparent;
+}
+
+.timeline-playhead {
+  position: absolute;
+  top: -4px;
+  bottom: -4px;
+  width: 3px;
+  background: #fff;
+  border-radius: 2px;
+  transform: translateX(-50%);
+  box-shadow: 0 0 6px rgba(255, 255, 255, 0.8);
+  pointer-events: none;
+  transition: left 1s linear;
+  z-index: 2;
+}
+
+.timeline-playhead-paused {
+  animation: playheadBlink 1s step-end infinite;
+}
+
+@keyframes playheadBlink {
   0%, 100% { opacity: 1; }
-  50% { opacity: 0.6; }
+  50% { opacity: 0.2; }
 }
 
-.workout-timer-label {
+.timeline-time-remaining {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-top: 12px;
+  font-size: 1.5rem;
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  font-variant-numeric: tabular-nums;
+  color: var(--label);
+}
+
+.timeline-time-label {
   font-size: 0.7rem;
-  color: var(--label-tertiary);
   font-weight: 600;
+  color: var(--label-tertiary);
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  margin-top: 4px;
+}
+
+/* ================================================================== */
+/* ENCOURAGEMENT BANNER                                                */
+/* ================================================================== */
+.encouragement-banner {
+  margin: 12px 0;
+  padding: 12px 18px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, rgba(255, 107, 107, 0.15), rgba(255, 159, 28, 0.1));
+  border: 1px solid rgba(255, 107, 107, 0.2);
+  text-align: center;
+  animation: bannerSlideIn 0.35s ease-out;
+}
+
+@keyframes bannerSlideIn {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.encouragement-text {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--orange);
+  letter-spacing: -0.01em;
+  text-transform: uppercase;
 }
 
 /* ================================================================== */
@@ -825,15 +899,6 @@
   margin: 20px 0 8px;
 }
 
-.workout-controls.two-col {
-  flex-direction: row;
-  gap: 10px;
-}
-
-.workout-controls.two-col > button {
-  flex: 1;
-}
-
 .ctrl-btn {
   display: inline-flex;
   align-items: center;
@@ -843,16 +908,6 @@
 .ctrl-icon {
   width: 28px;
   height: 28px;
-}
-
-.workout-restart-btn {
-  background: var(--fill);
-  color: var(--label-secondary);
-  letter-spacing: 0.04em;
-}
-
-.workout-restart-btn:hover {
-  background: var(--fill-bright);
 }
 
 /* ================================================================== */
@@ -982,29 +1037,126 @@
   margin-bottom: 12px;
 }
 
-.ex-gif {
+/* Tappable card hover */
+.ex-card.ex-upcoming:hover,
+.ex-card.ex-done:hover {
+  opacity: 0.7;
+  border-color: rgba(10, 132, 255, 0.2);
+}
+
+/* ================================================================== */
+/* TEDDY EXERCISE ANIMATIONS                                           */
+/* ================================================================== */
+.teddy-exercise {
   width: 100%;
   height: 100%;
-  object-fit: cover;
   display: block;
 }
 
-.ex-gif-fallback {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
+.teddy-body {
+  transform-box: fill-box;
+  transform-origin: center center;
 }
 
-.ex-gif-fallback-icon {
-  font-size: 2.5rem;
+/* Squats / Jump-squats */
+@keyframes teddySquat {
+  0%, 100% { transform: translateY(0) scaleY(1); }
+  50% { transform: translateY(8px) scaleY(0.9); }
+}
+.teddy-anim-squat .teddy-body {
+  animation: teddySquat 1s ease-in-out infinite;
 }
 
-.ex-gif-fallback-text {
-  font-size: 0.82rem;
-  color: var(--label-tertiary);
-  font-weight: 500;
+/* Jumps / Tuck jumps */
+@keyframes teddyJump {
+  0%, 100% { transform: translateY(0); }
+  35% { transform: translateY(-16px); }
+  65% { transform: translateY(-16px); }
+}
+.teddy-anim-jump .teddy-body {
+  animation: teddyJump 0.8s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+/* Pushups */
+@keyframes teddyPushup {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(6px); }
+}
+.teddy-anim-pushup .teddy-body {
+  animation: teddyPushup 1.2s ease-in-out infinite;
+}
+
+/* Planks — breathing */
+@keyframes teddyBreathe {
+  0%, 100% { transform: scaleX(1) scaleY(1); }
+  50% { transform: scaleX(1.02) scaleY(0.98); }
+}
+.teddy-anim-plank .teddy-body {
+  animation: teddyBreathe 2s ease-in-out infinite;
+}
+
+/* Sit-ups */
+@keyframes teddySitup {
+  0%, 100% { transform: rotate(-8deg) translateY(0); }
+  50% { transform: rotate(4deg) translateY(-6px); }
+}
+.teddy-anim-situp .teddy-body {
+  animation: teddySitup 1.5s ease-in-out infinite;
+}
+
+/* Lunges */
+@keyframes teddyLunge {
+  0%, 100% { transform: translateX(0) translateY(0); }
+  50% { transform: translateX(4px) translateY(4px); }
+}
+.teddy-anim-lunge .teddy-body {
+  animation: teddyLunge 1.5s ease-in-out infinite;
+}
+
+/* Burpees */
+@keyframes teddyBurpee {
+  0% { transform: translateY(0) scaleY(1); }
+  25% { transform: translateY(10px) scaleY(0.75); }
+  50% { transform: translateY(10px) scaleY(0.75); }
+  75% { transform: translateY(-14px) scaleY(1); }
+  100% { transform: translateY(0) scaleY(1); }
+}
+.teddy-anim-burpee .teddy-body {
+  animation: teddyBurpee 2s ease-in-out infinite;
+}
+
+/* Mountain climbers */
+@keyframes teddyClimb {
+  0%, 100% { transform: rotate(-2deg); }
+  50% { transform: rotate(2deg); }
+}
+.teddy-anim-climb .teddy-body {
+  animation: teddyClimb 0.4s linear infinite;
+}
+
+/* Jumping jacks */
+@keyframes teddyJacks {
+  0%, 100% { transform: scaleX(1); }
+  50% { transform: scaleX(1.15); }
+}
+.teddy-anim-jacks .teddy-body {
+  animation: teddyJacks 0.6s ease-in-out infinite;
+}
+
+/* Hip bridges */
+@keyframes teddyBridge {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+.teddy-anim-bridge .teddy-body {
+  animation: teddyBridge 1.5s ease-in-out infinite;
+}
+
+/* Supermans — floating */
+@keyframes teddySuperman {
+  0%, 100% { transform: translateY(0) rotate(-2deg); }
+  50% { transform: translateY(-8px) rotate(2deg); }
+}
+.teddy-anim-superman .teddy-body {
+  animation: teddySuperman 2s ease-in-out infinite;
 }

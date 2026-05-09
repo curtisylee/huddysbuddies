@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import type { Exercise } from '../types'
+import { TeddyExercise } from './TeddyExercise'
 
 type Props = {
   exercise: Exercise
@@ -7,6 +8,7 @@ type Props = {
   currentSet?: number
   phaseSecondsLeft?: number
   phaseLabel?: string
+  onJumpTo?: () => void
 }
 
 function formatWork(exercise: Exercise): string {
@@ -30,6 +32,7 @@ export function ExerciseCard({
   currentSet,
   phaseSecondsLeft,
   phaseLabel,
+  onJumpTo,
 }: Props) {
   const [expanded, setExpanded] = useState(false)
   const cardRef = useRef<HTMLElement>(null)
@@ -38,24 +41,31 @@ export function ExerciseCard({
   useEffect(() => {
     if (status === 'active') {
       setExpanded(true)
-      // Scroll into view when becoming active
       cardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
     } else {
       setExpanded(false)
     }
   }, [status])
 
+  const handleClick = () => {
+    if (onJumpTo) {
+      onJumpTo()
+    } else {
+      setExpanded((o) => !o)
+    }
+  }
+
   return (
     <article
       ref={cardRef}
       className={`ex-card ex-${status}`}
-      onClick={() => setExpanded((o) => !o)}
+      onClick={handleClick}
       role="button"
       tabIndex={0}
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ') {
           e.preventDefault()
-          setExpanded((o) => !o)
+          handleClick()
         }
       }}
     >
@@ -89,21 +99,7 @@ export function ExerciseCard({
         {expanded && (
           <div className="ex-expanded">
             <div className="ex-gif-wrap">
-              <img
-                src={exercise.gifUrl}
-                alt={`${exercise.name} demonstration`}
-                className="ex-gif"
-                onError={(e) => {
-                  const target = e.currentTarget
-                  target.style.display = 'none'
-                  const fallback = target.nextElementSibling as HTMLElement | null
-                  if (fallback) fallback.style.display = 'flex'
-                }}
-              />
-              <div className="ex-gif-fallback" style={{ display: 'none' }}>
-                <span className="ex-gif-fallback-icon">🐕</span>
-                <span className="ex-gif-fallback-text">GIF coming soon</span>
-              </div>
+              <TeddyExercise exerciseId={exercise.id} />
             </div>
             <p className="ex-cue">{exercise.cue}</p>
           </div>

@@ -1,7 +1,7 @@
 import { CoachPanel } from '../components/CoachPanel'
 import { ExerciseCard } from '../components/ExerciseCard'
 import { WorkoutControls } from '../components/WorkoutControls'
-import { WorkoutTimer } from '../components/WorkoutTimer'
+import { WorkoutTimeline } from '../components/WorkoutTimeline'
 import { useWorkoutSession } from '../hooks/useWorkoutSession'
 import type { DaySchedule, Exercise } from '../types'
 
@@ -61,9 +61,14 @@ export function TodayScreen({
         <p className="subtitle">Level {level} &bull; 10 min</p>
 
         {session.isStarted && session.phase !== 'complete' ? (
-          <div className="workout-timer-container">
-            <WorkoutTimer secondsLeft={session.totalSecondsLeft} paused={session.paused} />
-          </div>
+          <WorkoutTimeline
+            exercises={exercises}
+            currentExerciseIndex={session.currentExerciseIndex}
+            totalSecondsLeft={session.totalSecondsLeft}
+            completedIds={session.completedIds}
+            paused={session.paused}
+            onSegmentTap={session.startFromExercise}
+          />
         ) : null}
 
         {!session.isStarted && (
@@ -85,8 +90,14 @@ export function TodayScreen({
         onStart={session.start}
         onPause={session.pause}
         onResume={session.resume}
-        onRestart={session.restart}
       />
+
+      {/* Encouragement banner */}
+      {session.currentPhrase && session.isStarted && (
+        <div className="encouragement-banner" aria-live="polite" role="status">
+          <span className="encouragement-text">{session.currentPhrase}</span>
+        </div>
+      )}
 
       {!session.isStarted && session.phase !== 'complete' && (
         <CoachPanel
@@ -114,6 +125,7 @@ export function TodayScreen({
                   : undefined
               }
               phaseLabel={phaseLabel(idx)}
+              onJumpTo={() => session.startFromExercise(idx)}
             />
           ))}
         </div>

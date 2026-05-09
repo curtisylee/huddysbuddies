@@ -21,10 +21,20 @@ export default function App() {
         <div className="brand">
           <div className="brand-icon" aria-hidden>
             <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-              <path d="M13.49 5.48c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm-3.6 13.9l1-4.4 2.1 2v6h2v-7.5l-2.1-2 .6-3c1.3 1.5 3.3 2.5 5.5 2.5v-2c-1.9 0-3.5-1-4.3-2.4l-1-1.6c-.4-.6-1-1-1.7-1-.3 0-.5.1-.8.1L6.99 8.48v5h2v-3.5l1.8-.7-1.6 8.1-4.9-1-.4 2 6.49 1z" />
+              {/* Teddy — goldendoodle face */}
+              <circle cx="12" cy="12" r="9" fill="#d4a043" />
+              <ellipse cx="5.5" cy="12" rx="3" ry="5" fill="#b8883a" />
+              <ellipse cx="18.5" cy="12" rx="3" ry="5" fill="#b8883a" />
+              <circle cx="12" cy="13.5" r="5.5" fill="#e8c88d" />
+              <circle cx="9.5" cy="10.5" r="1.5" fill="#2d1a0e" />
+              <circle cx="14.5" cy="10.5" r="1.5" fill="#2d1a0e" />
+              <circle cx="10" cy="10" r="0.5" fill="#fff" />
+              <circle cx="15" cy="10" r="0.5" fill="#fff" />
+              <ellipse cx="12" cy="14" rx="2" ry="1.3" fill="#2d1a0e" />
+              <path d="M 10 16 Q 12 18 14 16" stroke="#2d1a0e" strokeWidth="0.8" fill="none" strokeLinecap="round" />
             </svg>
           </div>
-          <span className="brand-text">Hudson Training</span>
+          <span className="brand-text">Huddy&apos;s Gym Buddies</span>
         </div>
         <div className="quick-stats">
           <button type="button" className="chip" onClick={() => setTab('stars')} aria-label={`${w.stars} stars`}>

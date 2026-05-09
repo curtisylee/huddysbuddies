@@ -79,3 +79,28 @@ export function announceWorkoutComplete(childName: string): string {
 export function announceWorkoutStart(childName: string): string {
   return `Come on ${childName}! It is time to pump it up! Ten minutes. Let's do this!`
 }
+
+// ---------------------------------------------------------------------------
+// Encouragement phrases — shown as banners during workout
+// ---------------------------------------------------------------------------
+
+export const ENCOURAGEMENT_PHRASES: string[] = [
+  'you can do it bruh!',
+  "don't be a girlie man",
+  'dowit, dowit',
+  'get swole',
+  'time to get jacked',
+  'you are a champion!',
+  'pump it up!',
+  'no pain, no gain!',
+  'come on, come on!',
+  'unstoppable!',
+  'Teddy believes in you!',
+  'feel the burn!',
+]
+
+export function pickEncouragement(): string {
+  return ENCOURAGEMENT_PHRASES[
+    Math.floor(Math.random() * ENCOURAGEMENT_PHRASES.length)
+  ]!
+}

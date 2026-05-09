@@ -15,6 +15,7 @@ import {
   announceSetStart,
   announceWorkoutComplete,
   announceWorkoutStart,
+  pickEncouragement,
 } from '../lib/coachCopy'
 
 function computeSetSeconds(exercise: Exercise): number {
@@ -37,8 +38,10 @@ export function useWorkoutSession(
   const [totalSecondsLeft, setTotalSecondsLeft] = useState(TOTAL_WORKOUT_SECONDS)
   const [phaseSecondsLeft, setPhaseSecondsLeft] = useState(0)
   const [completedIds, setCompletedIds] = useState<string[]>([])
+  const [currentPhrase, setCurrentPhrase] = useState<string | null>(null)
 
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const phraseClearRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   // Refs to access latest state in the interval callback
   const phaseRef = useRef(phase)
@@ -66,8 +69,17 @@ export function useWorkoutSession(
     }
   }, [])
 
+  const showPhrase = useCallback((phrase: string) => {
+    if (phraseClearRef.current) clearTimeout(phraseClearRef.current)
+    setCurrentPhrase(phrase)
+    phraseClearRef.current = setTimeout(() => setCurrentPhrase(null), 3000)
+  }, [])
+
   // Cleanup on unmount
-  useEffect(() => clearTimer, [clearTimer])
+  useEffect(() => () => {
+    clearTimer()
+    if (phraseClearRef.current) clearTimeout(phraseClearRef.current)
+  }, [clearTimer])
 
   const say = useCallback((text: string) => {
     speak(text, voiceEnabledRef.current)
@@ -83,8 +95,9 @@ export function useWorkoutSession(
       setPhaseSecondsLeft(sec)
       setPhase('exercising-set')
       say(announceExercise(ex))
+      showPhrase(pickEncouragement())
     },
-    [exercises, say],
+    [exercises, say, showPhrase],
   )
 
   const finishExercise = useCallback(
@@ -102,18 +115,20 @@ export function useWorkoutSession(
       const nextEx = exercises[nextIdx]
       if (nextEx) {
         say(announceTransition(nextEx.name))
+        showPhrase(pickEncouragement())
       }
       setPhase('transition')
       setPhaseSecondsLeft(TRANSITION_SECONDS)
     },
-    [exercises, say],
+    [exercises, say, showPhrase],
   )
 
   const completeWorkout = useCallback(() => {
     clearTimer()
     setPhase('complete')
     say(announceWorkoutComplete(childName))
-  }, [clearTimer, say, childName])
+    showPhrase('you are a champion!')
+  }, [clearTimer, say, childName, showPhrase])
 
   const tick = useCallback(() => {
     if (pausedRef.current) return
@@ -225,13 +240,30 @@ export function useWorkoutSession(
     setTotalSecondsLeft(TOTAL_WORKOUT_SECONDS)
     setCompletedIds([])
     setPaused(false)
+    setCurrentPhrase(null)
     say(announceWorkoutStart(childName))
-    // Small delay so the start announcement plays before exercise announcement
     setTimeout(() => {
       startExercise(0)
       startTimer()
     }, 1500)
   }, [childName, say, startExercise, startTimer])
+
+  const startFromExercise = useCallback(
+    (idx: number) => {
+      const ex = exercises[idx]
+      if (!ex) return
+      cancelSpeech()
+      // If idle, initialize total timer
+      if (phaseRef.current === 'idle') {
+        setTotalSecondsLeft(TOTAL_WORKOUT_SECONDS)
+        setCompletedIds([])
+      }
+      setPaused(false)
+      startExercise(idx)
+      startTimer()
+    },
+    [exercises, startExercise, startTimer],
+  )
 
   const pause = useCallback(() => {
     setPaused(true)
@@ -241,18 +273,6 @@ export function useWorkoutSession(
   const resume = useCallback(() => {
     setPaused(false)
   }, [])
-
-  const restart = useCallback(() => {
-    clearTimer()
-    cancelSpeech()
-    setPhase('idle')
-    setPaused(false)
-    setCurrentExerciseIndex(0)
-    setCurrentSet(1)
-    setTotalSecondsLeft(TOTAL_WORKOUT_SECONDS)
-    setPhaseSecondsLeft(0)
-    setCompletedIds([])
-  }, [clearTimer])
 
   const isStarted = phase !== 'idle'
 
@@ -265,9 +285,10 @@ export function useWorkoutSession(
     phaseSecondsLeft,
     completedIds,
     isStarted,
+    currentPhrase,
     start,
     pause,
     resume,
-    restart,
+    startFromExercise,
   }
 }
