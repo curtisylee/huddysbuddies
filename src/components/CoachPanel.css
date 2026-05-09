@@ -1,0 +1,109 @@
+.coach-panel {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 14px;
+  align-items: center;
+  padding: 14px 16px;
+  border-radius: 16px;
+  background: var(--card-elevated);
+  box-shadow: var(--shadow-sm);
+}
+
+.coach-visual {
+  position: relative;
+  width: 64px;
+  height: 64px;
+  border-radius: 18px;
+  background: linear-gradient(145deg, var(--coach-a), var(--coach-b));
+  display: grid;
+  place-items: center;
+}
+
+.coach-bubble-face {
+  width: 44px;
+  height: 40px;
+  border-radius: 50% / 42%;
+  background: rgba(255, 255, 255, 0.92);
+  position: relative;
+  box-shadow: inset 0 -2px 0 rgba(0, 0, 0, 0.06);
+}
+
+.coach-eye {
+  position: absolute;
+  top: 13px;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #1c1c1e;
+}
+
+.coach-eye-l {
+  left: 12px;
+}
+.coach-eye-r {
+  right: 12px;
+}
+
+.coach-smile {
+  position: absolute;
+  bottom: 10px;
+  left: 50%;
+  translate: -50% 0;
+  width: 16px;
+  height: 7px;
+  border-radius: 0 0 16px 16px;
+  border: 2px solid #1c1c1e;
+  border-top: none;
+  box-sizing: border-box;
+  opacity: 0.85;
+}
+
+.coach-badge {
+  position: absolute;
+  bottom: -8px;
+  right: -6px;
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 3px 6px;
+  border-radius: 6px;
+  background: var(--bg-grouped);
+  color: var(--label-secondary);
+  border: 1px solid var(--separator);
+}
+
+.coach-copy {
+  min-width: 0;
+}
+
+.coach-message {
+  margin: 0 0 10px;
+  font-size: 0.96rem;
+  line-height: 1.38;
+  color: var(--label);
+  letter-spacing: -0.01em;
+}
+
+.coach-tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 14px;
+}
+
+.voice-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.875rem;
+  color: var(--label-secondary);
+  cursor: pointer;
+  user-select: none;
+
+  input {
+    accent-color: var(--tint);
+    width: 18px;
+    height: 18px;
+  }
+}

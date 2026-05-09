@@ -1,0 +1,91 @@
+:root {
+  color-scheme: light dark;
+
+  --sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+
+  --label: rgba(29, 29, 31, 0.95);
+  --label-secondary: rgba(60, 60, 67, 0.66);
+  --label-tertiary: rgba(60, 60, 67, 0.45);
+
+  --bg-grouped: #f2f2f7;
+  --bg-card: #ffffff;
+
+  --fill-tertiary: rgba(118, 118, 128, 0.12);
+  --separator: rgba(60, 60, 67, 0.12);
+
+  --tint: #007aff;
+  --tint-press: #0062cc;
+  --success: #34c759;
+
+  --card-elevated: #ffffff;
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04), 0 6px 20px rgba(0, 0, 0, 0.06);
+
+  --coach-a: #0a84ff;
+  --coach-b: #5e5ce6;
+
+  font-family: var(--sans);
+  font-size: 17px;
+  line-height: 1.35;
+  color: var(--label);
+  background: var(--bg-grouped);
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --label: #f5f5f7;
+    --label-secondary: rgba(235, 235, 245, 0.6);
+    --label-tertiary: rgba(235, 235, 245, 0.35);
+
+    --bg-grouped: #000000;
+    --bg-card: #1c1c1e;
+
+    --fill-tertiary: rgba(118, 118, 128, 0.24);
+    --separator: rgba(84, 84, 88, 0.4);
+
+    --tint: #0a84ff;
+    --tint-press: #409cff;
+    --success: #34c759;
+
+    --card-elevated: #2c2c2e;
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.4), 0 10px 32px rgba(0, 0, 0, 0.45);
+
+    --coach-a: #5e9eff;
+    --coach-b: #9c8bff;
+  }
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--bg-grouped);
+}
+
+#root {
+  min-height: 100svh;
+  max-width: 520px;
+  margin: 0 auto;
+  background: var(--bg-grouped);
+}
+
+h2,
+h3 {
+  margin: 0;
+  font-weight: 600;
+  font-size: inherit;
+}
+
+p {
+  margin: 0;
+}
+
+button {
+  font-family: inherit;
+}
