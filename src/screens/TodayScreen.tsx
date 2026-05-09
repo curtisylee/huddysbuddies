@@ -15,6 +15,9 @@ type Props = {
   exercises: Exercise[]
 }
 
+const RING_R = 50
+const RING_CIRCUM = 2 * Math.PI * RING_R
+
 export function TodayScreen({
   childName,
   fraction,
@@ -29,26 +32,40 @@ export function TodayScreen({
 }: Props) {
   const pct = Math.round(fraction * 100)
   const activeExerciseName = exercises.find((e) => !doneToday.has(e.id))?.name
+  const dashOffset = RING_CIRCUM * (1 - fraction)
 
   return (
     <div className="screen scroll">
       <header className="hero">
-        <p className="large-title">{childName}&apos;s move time</p>
-        <p className="subtitle">
-          {daySchedule.label} &mdash; {daySchedule.theme} &bull; Level {level}
-        </p>
+        <div className="day-badge">
+          {daySchedule.label} &mdash; {daySchedule.theme}
+        </div>
+        <p className="large-title">{childName}&apos;s workout</p>
+        <p className="subtitle">Level {level} &bull; 10&ndash;15 min</p>
+
         <div className="progress-wrap" aria-label={`Workout progress ${pct} percent`}>
-          <div
-            className="progress-ring"
-            style={{
-              background: `conic-gradient(var(--tint) ${pct}%, var(--fill-tertiary) 0)`,
-            }}
-          />
+          <svg className="progress-ring-svg" viewBox="0 0 120 120">
+            <defs>
+              <linearGradient id="ring-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#fa114f" />
+                <stop offset="50%" stopColor="#ff6482" />
+                <stop offset="100%" stopColor="#ff9f0a" />
+              </linearGradient>
+            </defs>
+            <circle className="progress-ring-bg" cx="60" cy="60" r={RING_R} />
+            <circle
+              className="progress-ring-fill"
+              cx="60"
+              cy="60"
+              r={RING_R}
+              strokeDasharray={RING_CIRCUM}
+              strokeDashoffset={dashOffset}
+            />
+          </svg>
           <span className="progress-label">{pct}%</span>
         </div>
-        <p className="level-hint">
-          Level up every 2 weeks &bull; next level at {level * 14 - 13} days
-        </p>
+
+        <p className="level-hint">Levels up every 2 weeks</p>
       </header>
 
       {todayComplete ? (
@@ -68,7 +85,7 @@ export function TodayScreen({
       />
 
       <section aria-label="Exercises">
-        <h2 className="section-title">Today&apos;s checklist</h2>
+        <h2 className="section-title">Today&apos;s exercises</h2>
         <div className="ex-stack">
           {exercises.map((ex) => (
             <ExerciseCard

@@ -1,31 +1,50 @@
 :root {
   color-scheme: light dark;
 
-  --sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  --sans: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text',
+    'Helvetica Neue', system-ui, sans-serif;
 
-  --label: rgba(29, 29, 31, 0.95);
-  --label-secondary: rgba(60, 60, 67, 0.66);
-  --label-tertiary: rgba(60, 60, 67, 0.45);
+  /* Labels */
+  --label: #1d1d1f;
+  --label-secondary: rgba(60, 60, 67, 0.6);
+  --label-tertiary: rgba(60, 60, 67, 0.36);
 
+  /* Backgrounds */
   --bg-grouped: #f2f2f7;
   --bg-card: #ffffff;
-
-  --fill-tertiary: rgba(118, 118, 128, 0.12);
-  --separator: rgba(60, 60, 67, 0.12);
-
-  --tint: #007aff;
-  --tint-press: #0062cc;
-  --success: #34c759;
-
   --card-elevated: #ffffff;
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04), 0 6px 20px rgba(0, 0, 0, 0.06);
 
-  --coach-a: #0a84ff;
-  --coach-b: #5e5ce6;
+  /* Fills & separators */
+  --fill-tertiary: rgba(118, 118, 128, 0.08);
+  --fill-secondary: rgba(118, 118, 128, 0.14);
+  --separator: rgba(60, 60, 67, 0.09);
+
+  /* Tints */
+  --tint: #007aff;
+  --tint-press: #005ec4;
+  --tint-subtle: rgba(0, 122, 255, 0.1);
+  --success: #30d158;
+  --success-subtle: rgba(48, 209, 88, 0.12);
+  --orange: #ff9f0a;
+  --red: #ff453a;
+
+  /* Activity ring colors (Apple Fitness style) */
+  --ring-move: #fa114f;
+  --ring-exercise: #92e82a;
+  --ring-stand: #1eeaef;
+
+  /* Shadows */
+  --shadow-sm: 0 0.5px 1px rgba(0, 0, 0, 0.04), 0 1px 3px rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 2px 8px rgba(0, 0, 0, 0.06), 0 8px 24px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 4px 12px rgba(0, 0, 0, 0.06), 0 16px 48px rgba(0, 0, 0, 0.1);
+
+  /* Coach */
+  --coach-a: #5e5ce6;
+  --coach-b: #bf5af2;
 
   font-family: var(--sans);
   font-size: 17px;
-  line-height: 1.35;
+  line-height: 1.4;
   color: var(--label);
   background: var(--bg-grouped);
   text-rendering: optimizeLegibility;
@@ -36,24 +55,29 @@
 @media (prefers-color-scheme: dark) {
   :root {
     --label: #f5f5f7;
-    --label-secondary: rgba(235, 235, 245, 0.6);
-    --label-tertiary: rgba(235, 235, 245, 0.35);
+    --label-secondary: rgba(235, 235, 245, 0.55);
+    --label-tertiary: rgba(235, 235, 245, 0.28);
 
     --bg-grouped: #000000;
     --bg-card: #1c1c1e;
+    --card-elevated: #1c1c1e;
 
-    --fill-tertiary: rgba(118, 118, 128, 0.24);
-    --separator: rgba(84, 84, 88, 0.4);
+    --fill-tertiary: rgba(118, 118, 128, 0.2);
+    --fill-secondary: rgba(118, 118, 128, 0.28);
+    --separator: rgba(84, 84, 88, 0.36);
 
     --tint: #0a84ff;
     --tint-press: #409cff;
-    --success: #34c759;
+    --tint-subtle: rgba(10, 132, 255, 0.16);
+    --success: #30d158;
+    --success-subtle: rgba(48, 209, 88, 0.18);
 
-    --card-elevated: #2c2c2e;
-    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.4), 0 10px 32px rgba(0, 0, 0, 0.45);
+    --shadow-sm: none;
+    --shadow-md: none;
+    --shadow-lg: none;
 
-    --coach-a: #5e9eff;
-    --coach-b: #9c8bff;
+    --coach-a: #7d7aff;
+    --coach-b: #d19dff;
   }
 }
 
@@ -66,6 +90,7 @@
 body {
   margin: 0;
   background: var(--bg-grouped);
+  overflow-x: hidden;
 }
 
 #root {
@@ -88,4 +113,15 @@ p {
 
 button {
   font-family: inherit;
+}
+
+/* Smooth transitions on interactive elements */
+button,
+.ios-card,
+.ex-card {
+  transition: transform 0.15s ease, opacity 0.2s ease, background 0.2s ease;
+}
+
+button:active:not(:disabled) {
+  transform: scale(0.97);
 }

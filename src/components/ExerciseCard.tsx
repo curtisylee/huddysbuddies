@@ -13,9 +13,9 @@ type Props = {
 function formatWork(exercise: Exercise): string {
   if (exercise.reps === 'hold') {
     const s = exercise.holdSeconds ?? 20
-    return `${exercise.sets} × ${s}s hold`
+    return `${exercise.sets} x ${s}s hold`
   }
-  return `${exercise.sets} × ${exercise.reps} reps`
+  return `${exercise.sets} x ${exercise.reps} reps`
 }
 
 export function ExerciseCard({ exercise, done, voiceEnabled, onToggle }: Props) {
@@ -35,7 +35,9 @@ export function ExerciseCard({ exercise, done, voiceEnabled, onToggle }: Props) 
         aria-pressed={done}
         aria-label={`Mark ${exercise.name} ${done ? 'not done' : 'done'}`}
       >
-        <span className="ex-check-mark">{done ? '✓' : ''}</span>
+        <svg className="ex-check-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <polyline points="4 12 10 18 20 6" />
+        </svg>
       </button>
       <div className="ex-body">
         <div className="ex-row">
@@ -64,7 +66,7 @@ export function ExerciseCard({ exercise, done, voiceEnabled, onToggle }: Props) 
             </ol>
             <RepPad key={exercise.id} exercise={exercise} voiceEnabled={voiceEnabled} />
             <button type="button" className="ios-btn ios-btn-plain sm hear-steps" onClick={announce}>
-              🔊 Hear all steps
+              Hear all steps
             </button>
           </>
         ) : null}
