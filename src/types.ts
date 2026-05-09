@@ -9,6 +9,8 @@ export type ExerciseDefinition = {
   increment: number
   cue: string
   steps: string[]
+  /** Path to animated GIF demo */
+  gifUrl: string
 }
 
 /** Computed exercise for display at a specific level */
@@ -21,6 +23,7 @@ export type Exercise = {
   holdSeconds?: number
   cue: string
   steps: string[]
+  gifUrl: string
 }
 
 export type DaySchedule = {
@@ -50,5 +53,7 @@ export type StoredState = {
   voiceEnabled: boolean
   totalFinishedWorkouts: number
 }
+
+export type WorkoutPhase = 'idle' | 'exercising-set' | 'exercising-rest' | 'transition' | 'complete'
 
 export type TabId = 'today' | 'rewards' | 'stars'

@@ -34,3 +34,38 @@ export function cheerForRep(rep: number, target: number, name: string): string {
   if (rep % 4 === 0 && rep > 0) return `${rep} — staying strong on ${name}.`
   return String(rep)
 }
+
+// ---------------------------------------------------------------------------
+// Guided workout announcements
+// ---------------------------------------------------------------------------
+
+import type { Exercise } from '../types'
+
+export function announceExercise(exercise: Exercise): string {
+  if (exercise.reps === 'hold') {
+    const s = exercise.holdSeconds ?? 20
+    return `${exercise.name}. ${exercise.sets} ${exercise.sets === 1 ? 'set' : 'sets'} of ${s} seconds.`
+  }
+  return `${exercise.name}. ${exercise.sets} ${exercise.sets === 1 ? 'set' : 'sets'} of ${exercise.reps} reps.`
+}
+
+export function announceTransition(nextExerciseName: string): string {
+  const phrases = [
+    `Nice work. Next up: ${nextExerciseName}.`,
+    `Good job. Moving on to ${nextExerciseName}.`,
+    `Solid effort. ${nextExerciseName} is next.`,
+  ]
+  return phrases[Math.floor(Math.random() * phrases.length)]!
+}
+
+export function announceSetRest(nextSetNumber: number): string {
+  return `Quick rest. Set ${nextSetNumber} coming up.`
+}
+
+export function announceWorkoutComplete(childName: string): string {
+  return `Workout complete! Amazing effort, ${childName}. You crushed it.`
+}
+
+export function announceWorkoutStart(childName: string): string {
+  return `Let's go, ${childName}! Ten minutes. You've got this.`
+}

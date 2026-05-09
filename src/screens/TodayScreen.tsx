@@ -1,5 +1,8 @@
 import { CoachPanel } from '../components/CoachPanel'
 import { ExerciseCard } from '../components/ExerciseCard'
+import { WorkoutControls } from '../components/WorkoutControls'
+import { WorkoutTimer } from '../components/WorkoutTimer'
+import { useWorkoutSession } from '../hooks/useWorkoutSession'
 import type { DaySchedule, Exercise } from '../types'
 
 type Props = {
@@ -15,9 +18,6 @@ type Props = {
   exercises: Exercise[]
 }
 
-const RING_R = 50
-const RING_CIRCUM = 2 * Math.PI * RING_R
-
 export function TodayScreen({
   childName,
   fraction,
@@ -30,70 +30,90 @@ export function TodayScreen({
   level,
   exercises,
 }: Props) {
-  const pct = Math.round(fraction * 100)
+  const session = useWorkoutSession(exercises, voiceEnabled, childName, onToggle)
+
+  function exerciseStatus(idx: number): 'upcoming' | 'active' | 'done' {
+    if (session.completedIds.includes(exercises[idx]!.id) || doneToday.has(exercises[idx]!.id)) {
+      return 'done'
+    }
+    if (session.isStarted && session.phase !== 'complete' && idx === session.currentExerciseIndex) {
+      return 'active'
+    }
+    return 'upcoming'
+  }
+
+  function phaseLabel(idx: number): string | undefined {
+    if (exerciseStatus(idx) !== 'active') return undefined
+    if (session.phase === 'exercising-rest') return 'Rest'
+    if (session.phase === 'transition') return 'Get ready'
+    return `Set ${session.currentSet}`
+  }
+
   const activeExerciseName = exercises.find((e) => !doneToday.has(e.id))?.name
-  const dashOffset = RING_CIRCUM * (1 - fraction)
 
   return (
     <div className="screen scroll">
-      <header className="hero">
+      <header className={`hero ${session.isStarted ? 'tight' : ''}`}>
         <div className="day-badge">
           {daySchedule.label} &mdash; {daySchedule.theme}
         </div>
         <p className="large-title">{childName}&apos;s workout</p>
-        <p className="subtitle">Level {level} &bull; 10&ndash;15 min</p>
+        <p className="subtitle">Level {level} &bull; 10 min</p>
 
-        <div className="progress-wrap" aria-label={`Workout progress ${pct} percent`}>
-          <svg className="progress-ring-svg" viewBox="0 0 120 120">
-            <defs>
-              <linearGradient id="ring-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stopColor="#fa114f" />
-                <stop offset="50%" stopColor="#ff6482" />
-                <stop offset="100%" stopColor="#ff9f0a" />
-              </linearGradient>
-            </defs>
-            <circle className="progress-ring-bg" cx="60" cy="60" r={RING_R} />
-            <circle
-              className="progress-ring-fill"
-              cx="60"
-              cy="60"
-              r={RING_R}
-              strokeDasharray={RING_CIRCUM}
-              strokeDashoffset={dashOffset}
-            />
-          </svg>
-          <span className="progress-label">{pct}%</span>
-        </div>
+        {session.isStarted && session.phase !== 'complete' ? (
+          <div className="workout-timer-container">
+            <WorkoutTimer secondsLeft={session.totalSecondsLeft} paused={session.paused} />
+          </div>
+        ) : null}
 
-        <p className="level-hint">Levels up every 2 weeks</p>
+        {!session.isStarted && (
+          <p className="level-hint">Levels up every 2 weeks</p>
+        )}
       </header>
 
-      {todayComplete ? (
+      {session.phase === 'complete' || todayComplete ? (
         <section className="celebrate" aria-live="polite">
           <p className="celebrate-title">All done today</p>
           <p className="celebrate-sub">Daily reward unlocked &bull; stars waiting in Stars tab.</p>
         </section>
       ) : null}
 
-      <CoachPanel
-        childName={childName}
-        voiceEnabled={voiceEnabled}
-        setVoiceEnabled={setVoiceEnabled}
-        fraction={fraction}
-        todayComplete={todayComplete}
-        activeExerciseName={activeExerciseName}
+      <WorkoutControls
+        isStarted={session.isStarted}
+        paused={session.paused}
+        phase={session.phase}
+        onStart={session.start}
+        onPause={session.pause}
+        onResume={session.resume}
+        onRestart={session.restart}
       />
+
+      {!session.isStarted && session.phase !== 'complete' && (
+        <CoachPanel
+          childName={childName}
+          voiceEnabled={voiceEnabled}
+          setVoiceEnabled={setVoiceEnabled}
+          fraction={fraction}
+          todayComplete={todayComplete}
+          activeExerciseName={activeExerciseName}
+        />
+      )}
 
       <section aria-label="Exercises">
         <h2 className="section-title">Today&apos;s exercises</h2>
         <div className="ex-stack">
-          {exercises.map((ex) => (
+          {exercises.map((ex, idx) => (
             <ExerciseCard
               key={ex.id}
               exercise={ex}
-              done={doneToday.has(ex.id)}
-              voiceEnabled={voiceEnabled}
-              onToggle={() => onToggle(ex.id)}
+              status={exerciseStatus(idx)}
+              currentSet={session.currentSet}
+              phaseSecondsLeft={
+                idx === session.currentExerciseIndex && session.isStarted
+                  ? session.phaseSecondsLeft
+                  : undefined
+              }
+              phaseLabel={phaseLabel(idx)}
             />
           ))}
         </div>

@@ -1,13 +1,12 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { Exercise } from '../types'
-import { RepPad } from './RepPad'
-import { speak } from '../lib/speech'
 
 type Props = {
   exercise: Exercise
-  done: boolean
-  voiceEnabled: boolean
-  onToggle: () => void
+  status: 'upcoming' | 'active' | 'done'
+  currentSet?: number
+  phaseSecondsLeft?: number
+  phaseLabel?: string
 }
 
 function formatWork(exercise: Exercise): string {
@@ -18,58 +17,97 @@ function formatWork(exercise: Exercise): string {
   return `${exercise.sets} x ${exercise.reps} reps`
 }
 
-export function ExerciseCard({ exercise, done, voiceEnabled, onToggle }: Props) {
-  const [open, setOpen] = useState(false)
+function formatPhaseTime(s: number): string {
+  const m = Math.floor(s / 60)
+  const sec = s % 60
+  if (m > 0) return `${m}:${String(sec).padStart(2, '0')}`
+  return `${sec}s`
+}
 
-  const announce = () => {
-    const head = `${exercise.name}. ${formatWork(exercise)}.`
-    speak(`${head} ${exercise.cue} ${exercise.steps.join(' ')}`, voiceEnabled)
-  }
+export function ExerciseCard({
+  exercise,
+  status,
+  currentSet,
+  phaseSecondsLeft,
+  phaseLabel,
+}: Props) {
+  const [expanded, setExpanded] = useState(false)
+  const cardRef = useRef<HTMLElement>(null)
+
+  // Auto-expand when active
+  useEffect(() => {
+    if (status === 'active') {
+      setExpanded(true)
+      // Scroll into view when becoming active
+      cardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+    } else {
+      setExpanded(false)
+    }
+  }, [status])
 
   return (
-    <article className={`ex-card ${done ? 'done' : ''}`}>
-      <button
-        type="button"
-        className="ex-check"
-        onClick={onToggle}
-        aria-pressed={done}
-        aria-label={`Mark ${exercise.name} ${done ? 'not done' : 'done'}`}
-      >
-        <svg className="ex-check-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-          <polyline points="4 12 10 18 20 6" />
-        </svg>
-      </button>
+    <article
+      ref={cardRef}
+      className={`ex-card ex-${status}`}
+      onClick={() => setExpanded((o) => !o)}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault()
+          setExpanded((o) => !o)
+        }
+      }}
+    >
+      <div className="ex-status-icon">
+        {status === 'done' ? (
+          <svg className="ex-check-icon show" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <polyline points="4 12 10 18 20 6" />
+          </svg>
+        ) : status === 'active' ? (
+          <div className="ex-active-dot" />
+        ) : (
+          <div className="ex-upcoming-dot" />
+        )}
+      </div>
       <div className="ex-body">
         <div className="ex-row">
           <div>
             <h3 className="ex-title">{exercise.name}</h3>
             <p className="ex-meta">{formatWork(exercise)}</p>
           </div>
-          <button
-            type="button"
-            className="ios-btn ios-btn-secondary sm"
-            onClick={() => {
-              setOpen((o) => !o)
-              if (!open) announce()
-            }}
-          >
-            {open ? 'Hide' : 'Guide'}
-          </button>
+          {status === 'active' && phaseSecondsLeft !== undefined && (
+            <div className="ex-live-info">
+              <span className="ex-live-time">{formatPhaseTime(phaseSecondsLeft)}</span>
+              <span className="ex-live-label">
+                {phaseLabel ?? `Set ${currentSet ?? 1}`}
+              </span>
+            </div>
+          )}
         </div>
-        {open ? (
-          <>
+
+        {expanded && (
+          <div className="ex-expanded">
+            <div className="ex-gif-wrap">
+              <img
+                src={exercise.gifUrl}
+                alt={`${exercise.name} demonstration`}
+                className="ex-gif"
+                onError={(e) => {
+                  const target = e.currentTarget
+                  target.style.display = 'none'
+                  const fallback = target.nextElementSibling as HTMLElement | null
+                  if (fallback) fallback.style.display = 'flex'
+                }}
+              />
+              <div className="ex-gif-fallback" style={{ display: 'none' }}>
+                <span className="ex-gif-fallback-icon">🐕</span>
+                <span className="ex-gif-fallback-text">GIF coming soon</span>
+              </div>
+            </div>
             <p className="ex-cue">{exercise.cue}</p>
-            <ol className="ex-steps">
-              {exercise.steps.map((s, i) => (
-                <li key={i}>{s}</li>
-              ))}
-            </ol>
-            <RepPad key={exercise.id} exercise={exercise} voiceEnabled={voiceEnabled} />
-            <button type="button" className="ios-btn ios-btn-plain sm hear-steps" onClick={announce}>
-              Hear all steps
-            </button>
-          </>
-        ) : null}
+          </div>
+        )}
       </div>
     </article>
   )
