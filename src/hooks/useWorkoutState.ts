@@ -141,8 +141,8 @@ export function useWorkoutState(childName = 'Hudson') {
   const today = dateKey()
   const dayOfWeek = new Date().getDay()
 
-  // Progression: level increases every 2 weeks from start date
-  const level = getLevel(state.startDate)
+  // Progression: level increases every 14 completed workouts
+  const level = getLevel(state.totalFinishedWorkouts)
   const weekNumber = Math.ceil(level * 2 - 1) // approximate week display
 
   // Today's schedule and exercises

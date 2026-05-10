@@ -48,17 +48,19 @@ export function useWorkoutSession(
   const pausedRef = useRef(paused)
   const currentExerciseIndexRef = useRef(currentExerciseIndex)
   const currentSetRef = useRef(currentSet)
-  const totalSecondsLeftRef = useRef(totalSecondsLeft)
-  const phaseSecondsLeftRef = useRef(phaseSecondsLeft)
   const completedIdsRef = useRef(completedIds)
   const voiceEnabledRef = useRef(voiceEnabled)
+
+  // Wall-clock timestamps for accurate timing across background tabs
+  const totalEndRef = useRef(0)   // Date.now() when total timer expires
+  const phaseEndRef = useRef(0)   // Date.now() when current phase expires
+  const pauseStartRef = useRef(0) // Date.now() when pause started
+  const lastVoiceSecRef = useRef(-1) // last phase second we announced (dedup)
 
   phaseRef.current = phase
   pausedRef.current = paused
   currentExerciseIndexRef.current = currentExerciseIndex
   currentSetRef.current = currentSet
-  totalSecondsLeftRef.current = totalSecondsLeft
-  phaseSecondsLeftRef.current = phaseSecondsLeft
   completedIdsRef.current = completedIds
   voiceEnabledRef.current = voiceEnabled
 
@@ -85,6 +87,13 @@ export function useWorkoutSession(
     speak(text, voiceEnabledRef.current)
   }, [])
 
+  // Show encouragement on screen AND speak it aloud
+  const encourage = useCallback(() => {
+    const phrase = pickEncouragement()
+    showPhrase(phrase)
+    say(phrase)
+  }, [showPhrase, say])
+
   const startExercise = useCallback(
     (idx: number) => {
       const ex = exercises[idx]
@@ -93,11 +102,13 @@ export function useWorkoutSession(
       setCurrentSet(1)
       const sec = computeSetSeconds(ex)
       setPhaseSecondsLeft(sec)
+      phaseEndRef.current = Date.now() + sec * 1000
+      lastVoiceSecRef.current = sec
       setPhase('exercising-set')
       say(announceExercise(ex))
-      showPhrase(pickEncouragement())
+      encourage()
     },
-    [exercises, say, showPhrase],
+    [exercises, say, encourage],
   )
 
   const finishExercise = useCallback(
@@ -115,19 +126,23 @@ export function useWorkoutSession(
       const nextEx = exercises[nextIdx]
       if (nextEx) {
         say(announceTransition(nextEx.name))
-        showPhrase(pickEncouragement())
+        encourage()
       }
       setPhase('transition')
       setPhaseSecondsLeft(TRANSITION_SECONDS)
+      phaseEndRef.current = Date.now() + TRANSITION_SECONDS * 1000
+      lastVoiceSecRef.current = TRANSITION_SECONDS
     },
-    [exercises, say, showPhrase],
+    [exercises, say, encourage],
   )
 
   const completeWorkout = useCallback(() => {
     clearTimer()
     setPhase('complete')
     say(announceWorkoutComplete(childName))
-    showPhrase('you are a champion!')
+    const phrase = 'you are a champion!'
+    showPhrase(phrase)
+    say(phrase)
   }, [clearTimer, say, childName, showPhrase])
 
   const tick = useCallback(() => {
@@ -136,8 +151,10 @@ export function useWorkoutSession(
     const p = phaseRef.current
     if (p === 'idle' || p === 'complete') return
 
-    // Decrement total timer
-    const newTotal = totalSecondsLeftRef.current - 1
+    const now = Date.now()
+
+    // Compute total remaining from wall clock
+    const newTotal = Math.max(0, Math.ceil((totalEndRef.current - now) / 1000))
     setTotalSecondsLeft(newTotal)
 
     if (newTotal <= 0) {
@@ -154,35 +171,35 @@ export function useWorkoutSession(
       return
     }
 
-    // Decrement phase timer
-    const newPhase = phaseSecondsLeftRef.current - 1
+    // Compute phase remaining from wall clock
+    const newPhase = Math.max(0, Math.ceil((phaseEndRef.current - now) / 1000))
     setPhaseSecondsLeft(newPhase)
 
-    if (p === 'exercising-set') {
-      const ex = exercises[currentExerciseIndexRef.current]
-      if (ex) {
-        if (ex.reps === 'hold') {
-          // Hold exercise: countdown the remaining seconds
-          if (newPhase === 20 || newPhase === 15 || newPhase === 10) {
-            say(String(newPhase))
-          } else if (newPhase <= 5 && newPhase > 0) {
-            say(String(newPhase))
-          }
-        } else {
-          // Rep exercise: count each completed rep
-          const totalSetSeconds = computeSetSeconds(ex)
-          const elapsed = totalSetSeconds - newPhase
-          if (elapsed > 0 && elapsed % SECONDS_PER_REP === 0) {
-            const repNum = elapsed / SECONDS_PER_REP
-            say(String(repNum))
+    // Voice announcements — only when the second value actually changes
+    if (newPhase > 0 && newPhase !== lastVoiceSecRef.current) {
+      lastVoiceSecRef.current = newPhase
+
+      if (p === 'exercising-set') {
+        const ex = exercises[currentExerciseIndexRef.current]
+        if (ex) {
+          if (ex.reps === 'hold') {
+            if (newPhase === 20 || newPhase === 15 || newPhase === 10) {
+              say(String(newPhase))
+            } else if (newPhase <= 5) {
+              say(String(newPhase))
+            }
+          } else {
+            const totalSetSeconds = computeSetSeconds(ex)
+            const elapsed = totalSetSeconds - newPhase
+            if (elapsed > 0 && elapsed % SECONDS_PER_REP === 0) {
+              const repNum = elapsed / SECONDS_PER_REP
+              say(String(repNum))
+            }
           }
         }
       }
-    }
 
-    // Rest countdown: "Next set starting in 5, 4, 3, 2, 1"
-    if (p === 'exercising-rest') {
-      if (newPhase <= 5 && newPhase > 0) {
+      if (p === 'exercising-rest' && newPhase <= 5) {
         say(announceRestCountdown(newPhase))
       }
     }
@@ -200,6 +217,8 @@ export function useWorkoutSession(
         // More sets remaining — rest between sets
         setPhase('exercising-rest')
         setPhaseSecondsLeft(REST_BETWEEN_SETS_SECONDS)
+        phaseEndRef.current = now + REST_BETWEEN_SETS_SECONDS * 1000
+        lastVoiceSecRef.current = REST_BETWEEN_SETS_SECONDS
         say(announceSetRest(curSet + 1))
       } else {
         // Exercise fully done
@@ -218,6 +237,8 @@ export function useWorkoutSession(
         const sec = computeSetSeconds(ex)
         setPhaseSecondsLeft(sec)
         setPhase('exercising-set')
+        phaseEndRef.current = now + sec * 1000
+        lastVoiceSecRef.current = sec
         say(announceSetStart(nextSet))
       }
     } else if (p === 'transition') {
@@ -231,6 +252,17 @@ export function useWorkoutSession(
     }
   }, [exercises, onExerciseComplete, say, finishExercise, startTransition, startExercise, completeWorkout])
 
+  // Catch up immediately when the tab becomes visible again
+  useEffect(() => {
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible' && !pausedRef.current) {
+        tick()
+      }
+    }
+    document.addEventListener('visibilitychange', handleVisibility)
+    return () => document.removeEventListener('visibilitychange', handleVisibility)
+  }, [tick])
+
   const startTimer = useCallback(() => {
     clearTimer()
     intervalRef.current = setInterval(tick, 1000)
@@ -243,6 +275,7 @@ export function useWorkoutSession(
     setCurrentPhrase(null)
     say(announceWorkoutStart(childName))
     setTimeout(() => {
+      totalEndRef.current = Date.now() + TOTAL_WORKOUT_SECONDS * 1000
       startExercise(0)
       startTimer()
     }, 1500)
@@ -256,6 +289,7 @@ export function useWorkoutSession(
       // If idle, initialize total timer
       if (phaseRef.current === 'idle') {
         setTotalSecondsLeft(TOTAL_WORKOUT_SECONDS)
+        totalEndRef.current = Date.now() + TOTAL_WORKOUT_SECONDS * 1000
         setCompletedIds([])
       }
       setPaused(false)
@@ -267,10 +301,15 @@ export function useWorkoutSession(
 
   const pause = useCallback(() => {
     setPaused(true)
+    pauseStartRef.current = Date.now()
     cancelSpeech()
   }, [])
 
   const resume = useCallback(() => {
+    // Shift end timestamps forward by the paused duration
+    const pausedMs = Date.now() - pauseStartRef.current
+    totalEndRef.current += pausedMs
+    phaseEndRef.current += pausedMs
     setPaused(false)
   }, [])
 

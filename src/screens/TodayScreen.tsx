@@ -75,7 +75,7 @@ export function TodayScreen({
         ) : null}
 
         {!session.isStarted && (
-          <p className="level-hint">Levels up every 2 weeks</p>
+          <p className="level-hint">Levels up every 14 workouts</p>
         )}
       </header>
 

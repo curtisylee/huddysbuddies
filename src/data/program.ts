@@ -1,5 +1,4 @@
 import type { DaySchedule, Exercise, ExerciseDefinition, Prize } from '../types'
-import { parseDateKey } from '../lib/dates'
 
 // ---------------------------------------------------------------------------
 // Timing constants for guided workout flow
@@ -241,12 +240,8 @@ const SCHEDULE_BY_DAY = new Map(WEEKLY_SCHEDULE.map((d) => [d.dayIndex, d]))
 // Progression — level increases every 2 weeks
 // ---------------------------------------------------------------------------
 
-export function getLevel(startDate: string): number {
-  const start = parseDateKey(startDate)
-  const now = new Date()
-  const diffMs = now.getTime() - start.getTime()
-  const diffDays = Math.max(0, Math.floor(diffMs / (1000 * 60 * 60 * 24)))
-  return Math.floor(diffDays / 14) + 1
+export function getLevel(completedWorkouts: number): number {
+  return Math.floor(completedWorkouts / 14) + 1
 }
 
 function setsForLevel(level: number): number {

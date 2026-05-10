@@ -63,6 +63,7 @@ export function WorkoutTimeline({
   onSegmentTap,
 }: Props) {
   const barRef = useRef<HTMLDivElement>(null)
+  const playheadRef = useRef<HTMLDivElement>(null)
   const draggingRef = useRef(false)
 
   const durations = exercises.map(estimateExerciseDuration)
@@ -156,16 +157,18 @@ export function WorkoutTimeline({
     [hitTest, onSegmentTap],
   )
 
-  const handlePointerDown = useCallback(
+  // Drag starts only from the playhead itself
+  const handlePlayheadDown = useCallback(
     (e: React.PointerEvent) => {
+      e.stopPropagation()
+      e.preventDefault()
       draggingRef.current = true
-      ;(e.target as HTMLElement).setPointerCapture(e.pointerId)
-      jumpToPointer(e.clientX)
+      playheadRef.current?.setPointerCapture(e.pointerId)
     },
-    [jumpToPointer],
+    [],
   )
 
-  const handlePointerMove = useCallback(
+  const handlePlayheadMove = useCallback(
     (e: React.PointerEvent) => {
       if (!draggingRef.current) return
       jumpToPointer(e.clientX)
@@ -173,7 +176,7 @@ export function WorkoutTimeline({
     [jumpToPointer],
   )
 
-  const handlePointerUp = useCallback(() => {
+  const handlePlayheadUp = useCallback(() => {
     draggingRef.current = false
   }, [])
 
@@ -217,21 +220,8 @@ export function WorkoutTimeline({
         )}
       </div>
 
-      {/* Bar — entire bar is interactive for scrubbing */}
-      <div
-        ref={barRef}
-        className="timeline-bar"
-        role="slider"
-        aria-label="Scrub through workout"
-        aria-valuenow={Math.round(playheadPct)}
-        aria-valuemin={0}
-        aria-valuemax={100}
-        tabIndex={0}
-        onPointerDown={handlePointerDown}
-        onPointerMove={handlePointerMove}
-        onPointerUp={handlePointerUp}
-        onPointerCancel={handlePointerUp}
-      >
+      {/* Bar */}
+      <div ref={barRef} className="timeline-bar" role="group">
         {segments.map((s, i) => {
           if (s.exerciseIdx < 0) {
             return <div key={i} className="timeline-gap" style={{ flexBasis: `${s.widthPct}%` }} />
@@ -246,8 +236,9 @@ export function WorkoutTimeline({
               : 'timeline-seg timeline-seg-upcoming'
 
           return (
-            <div
+            <button
               key={i}
+              type="button"
               className={cls}
               style={
                 {
@@ -255,16 +246,29 @@ export function WorkoutTimeline({
                   '--seg-color': s.color,
                 } as React.CSSProperties
               }
+              onClick={() => onSegmentTap(idx)}
               title={exercises[idx]!.name}
+              aria-label={`Jump to ${exercises[idx]!.name}`}
+              aria-current={isActive ? 'true' : undefined}
             />
           )
         })}
 
-        {/* Playhead — draggable cursor */}
+        {/* Playhead — drag only by holding this marker */}
         <div
+          ref={playheadRef}
           className={`timeline-playhead ${paused ? 'timeline-playhead-paused' : ''}`}
           style={{ left: `${playheadPct}%` }}
-          aria-hidden
+          role="slider"
+          aria-label="Scrub through workout"
+          aria-valuenow={Math.round(playheadPct)}
+          aria-valuemin={0}
+          aria-valuemax={100}
+          tabIndex={0}
+          onPointerDown={handlePlayheadDown}
+          onPointerMove={handlePlayheadMove}
+          onPointerUp={handlePlayheadUp}
+          onPointerCancel={handlePlayheadUp}
         />
       </div>
 
