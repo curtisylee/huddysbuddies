@@ -39,18 +39,16 @@ export function ExerciseCard({
   const [expanded, setExpanded] = useState(false)
   const cardRef = useRef<HTMLElement>(null)
 
-  // Auto-expand when active
+  // Auto-expand and scroll into view when active
   useEffect(() => {
     if (status === 'active') {
       setExpanded(true)
       cardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
-    } else {
-      setExpanded(false)
     }
   }, [status])
 
   const handleClick = () => {
-    if (onJumpTo) {
+    if (status === 'active' && onJumpTo) {
       onJumpTo()
     } else {
       setExpanded((o) => !o)
