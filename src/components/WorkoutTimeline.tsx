@@ -1,6 +1,5 @@
-import type { Exercise } from '../types'
+import type { Exercise, WorkoutPhase } from '../types'
 import {
-  TOTAL_WORKOUT_SECONDS,
   TRANSITION_SECONDS,
   SECONDS_PER_REP,
   REST_BETWEEN_SETS_SECONDS,
@@ -21,14 +20,20 @@ type Props = {
   totalSecondsLeft: number
   completedIds: string[]
   paused: boolean
+  phase: WorkoutPhase
+  currentSet: number
+  phaseSecondsLeft: number
   onSegmentTap: (idx: number) => void
 }
 
+function computeSetSeconds(ex: Exercise): number {
+  return ex.reps === 'hold'
+    ? (ex.holdSeconds ?? 20)
+    : (ex.reps as number) * SECONDS_PER_REP
+}
+
 function estimateExerciseDuration(ex: Exercise): number {
-  const setSeconds =
-    ex.reps === 'hold'
-      ? (ex.holdSeconds ?? 20)
-      : (ex.reps as number) * SECONDS_PER_REP
+  const setSeconds = computeSetSeconds(ex)
   const restSeconds = (ex.sets - 1) * REST_BETWEEN_SETS_SECONDS
   return ex.sets * setSeconds + restSeconds
 }
@@ -51,17 +56,70 @@ export function WorkoutTimeline({
   totalSecondsLeft,
   completedIds,
   paused,
+  phase,
+  currentSet,
+  phaseSecondsLeft,
   onSegmentTap,
 }: Props) {
   const durations = exercises.map(estimateExerciseDuration)
   const transitionTotal = (exercises.length - 1) * TRANSITION_SECONDS
   const exerciseTotal = durations.reduce((a, b) => a + b, 0)
   const totalEstimated = exerciseTotal + transitionTotal
+  const gapWidthPct = exercises.length > 1 ? (TRANSITION_SECONDS / totalEstimated) * 100 : 0
 
-  const elapsed = TOTAL_WORKOUT_SECONDS - totalSecondsLeft
-  const playheadPct = Math.min(100, (elapsed / TOTAL_WORKOUT_SECONDS) * 100)
+  // Compute cumulative start position for each exercise segment
+  const segStartPct: number[] = []
+  const segWidthPct: number[] = []
+  let cum = 0
+  for (let i = 0; i < exercises.length; i++) {
+    segStartPct.push(cum)
+    const w = (durations[i]! / totalEstimated) * 100
+    segWidthPct.push(w)
+    cum += w
+    if (i < exercises.length - 1) {
+      cum += gapWidthPct
+    }
+  }
 
-  // Build segment data
+  // Compute playhead position based on current exercise progress
+  let playheadPct = 0
+  if (phase === 'complete') {
+    playheadPct = 100
+  } else if (phase === 'transition') {
+    // During transition, currentExerciseIndex still points to the just-completed exercise.
+    // Playhead should be in the gap after that segment.
+    const idx = currentExerciseIndex
+    const segEnd = segStartPct[idx]! + segWidthPct[idx]!
+    const gapElapsed = TRANSITION_SECONDS - phaseSecondsLeft
+    const gapProgress = gapElapsed / TRANSITION_SECONDS
+    playheadPct = segEnd + gapWidthPct * gapProgress
+  } else if (phase === 'exercising-set' || phase === 'exercising-rest') {
+    const idx = currentExerciseIndex
+    const ex = exercises[idx]!
+    const setSeconds = computeSetSeconds(ex)
+    const totalDur = durations[idx]!
+
+    let elapsed = 0
+    if (phase === 'exercising-set') {
+      const prevSets = currentSet - 1
+      elapsed =
+        prevSets * setSeconds +
+        prevSets * REST_BETWEEN_SETS_SECONDS +
+        (setSeconds - phaseSecondsLeft)
+    } else {
+      // exercising-rest: current set just finished, resting before next
+      elapsed =
+        currentSet * setSeconds +
+        (currentSet - 1) * REST_BETWEEN_SETS_SECONDS +
+        (REST_BETWEEN_SETS_SECONDS - phaseSecondsLeft)
+    }
+
+    const progress = Math.min(1, elapsed / totalDur)
+    playheadPct = segStartPct[idx]! + segWidthPct[idx]! * progress
+  }
+  playheadPct = Math.min(100, Math.max(0, playheadPct))
+
+  // Build segment data for rendering
   type Segment = {
     exerciseIdx: number  // -1 for gap
     widthPct: number
@@ -71,16 +129,14 @@ export function WorkoutTimeline({
 
   const segments: Segment[] = []
   exercises.forEach((ex, idx) => {
-    const exPct = (durations[idx]! / totalEstimated) * 100
     segments.push({
       exerciseIdx: idx,
-      widthPct: exPct,
+      widthPct: segWidthPct[idx]!,
       color: SEGMENT_COLORS[idx % SEGMENT_COLORS.length]!,
       label: abbreviate(ex.name),
     })
     if (idx < exercises.length - 1) {
-      const gapPct = (TRANSITION_SECONDS / totalEstimated) * 100
-      segments.push({ exerciseIdx: -1, widthPct: gapPct, color: 'transparent', label: '' })
+      segments.push({ exerciseIdx: -1, widthPct: gapWidthPct, color: 'transparent', label: '' })
     }
   })
 

@@ -67,6 +67,9 @@ export function TodayScreen({
             totalSecondsLeft={session.totalSecondsLeft}
             completedIds={session.completedIds}
             paused={session.paused}
+            phase={session.phase}
+            currentSet={session.currentSet}
+            phaseSecondsLeft={session.phaseSecondsLeft}
             onSegmentTap={session.startFromExercise}
           />
         ) : null}
