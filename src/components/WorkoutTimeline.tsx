@@ -1,4 +1,4 @@
-import { useCallback, useRef } from 'react'
+import { useCallback, useLayoutEffect, useRef } from 'react'
 import type { Exercise, WorkoutPhase } from '../types'
 import {
   TRANSITION_SECONDS,
@@ -203,6 +203,14 @@ export function WorkoutTimeline({
     dragPctRef.current = null
   }, [])
 
+  // After every render, if we're dragging, force the playhead to the drag
+  // position. This prevents timer-driven re-renders from snapping it back.
+  useLayoutEffect(() => {
+    if (draggingRef.current && dragPctRef.current !== null && playheadRef.current) {
+      playheadRef.current.style.left = `${dragPctRef.current}%`
+    }
+  })
+
   // Build segment data for rendering
   type Segment = {
     exerciseIdx: number  // -1 for gap
@@ -281,7 +289,7 @@ export function WorkoutTimeline({
         <div
           ref={playheadRef}
           className={`timeline-playhead ${paused ? 'timeline-playhead-paused' : ''}`}
-          style={{ left: `${draggingRef.current && dragPctRef.current !== null ? dragPctRef.current : playheadPct}%` }}
+          style={{ left: `${playheadPct}%` }}
           role="slider"
           aria-label="Scrub through workout"
           aria-valuenow={Math.round(playheadPct)}
