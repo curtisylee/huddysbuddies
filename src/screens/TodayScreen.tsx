@@ -128,6 +128,7 @@ export function TodayScreen({
                   : undefined
               }
               phaseLabel={phaseLabel(idx)}
+              paused={session.paused}
               onJumpTo={() => session.startFromExercise(idx)}
             />
           ))}

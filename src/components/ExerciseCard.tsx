@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import type { Exercise } from '../types'
+import { SECONDS_PER_REP } from '../data/program'
 
 type Props = {
   exercise: Exercise
@@ -7,6 +8,7 @@ type Props = {
   currentSet?: number
   phaseSecondsLeft?: number
   phaseLabel?: string
+  paused?: boolean
   onJumpTo?: () => void
 }
 
@@ -31,6 +33,7 @@ export function ExerciseCard({
   currentSet,
   phaseSecondsLeft,
   phaseLabel,
+  paused,
   onJumpTo,
 }: Props) {
   const [expanded, setExpanded] = useState(false)
@@ -99,7 +102,18 @@ export function ExerciseCard({
           <div className="ex-expanded">
             <div className="ex-gif-wrap">
               <img
-                className="ex-exercise-img"
+                className={`ex-exercise-img ex-anim-${exercise.id}${
+                  status === 'active' && phaseLabel?.startsWith('Set') && !paused
+                    ? ' ex-animating'
+                    : ''
+                }`}
+                style={
+                  status === 'active' && phaseLabel?.startsWith('Set')
+                    ? ({
+                        '--anim-dur': `${exercise.reps === 'hold' ? 3 : SECONDS_PER_REP}s`,
+                      } as React.CSSProperties)
+                    : undefined
+                }
                 src={`/exercises/${exercise.id}.png`}
                 alt={`${exercise.name} demonstration`}
               />

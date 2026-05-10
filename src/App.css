@@ -1075,6 +1075,116 @@
   object-fit: contain;
 }
 
+/* ================================================================== */
+/* EXERCISE IMAGE ANIMATIONS — synced to rep countdown                 */
+/* ================================================================== */
+
+/* Only animate when .ex-animating is present (active set, not paused) */
+.ex-animating {
+  animation-duration: var(--anim-dur, 3s);
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+}
+
+/* Sit-ups: rock/curl up and back */
+@keyframes anim-situps {
+  0%, 100% { transform: rotate(0deg) translateY(0); }
+  50% { transform: rotate(-8deg) translateY(-6px); }
+}
+.ex-anim-situps.ex-animating { animation-name: anim-situps; }
+
+/* Lunges: dip forward and back */
+@keyframes anim-lunges {
+  0%, 100% { transform: translateX(0) translateY(0); }
+  50% { transform: translateX(-8px) translateY(5px); }
+}
+.ex-anim-lunges.ex-animating { animation-name: anim-lunges; }
+
+/* Plank: subtle breathing pulse */
+@keyframes anim-planks {
+  0%, 100% { transform: scaleY(1) scaleX(1); }
+  50% { transform: scaleY(1.03) scaleX(1.01); }
+}
+.ex-anim-planks { transform-origin: center bottom; }
+.ex-anim-planks.ex-animating { animation-name: anim-planks; }
+
+/* Squats: bounce down and up */
+@keyframes anim-squats {
+  0%, 100% { transform: translateY(0) scaleY(1); }
+  50% { transform: translateY(8px) scaleY(0.95); }
+}
+.ex-anim-squats { transform-origin: center bottom; }
+.ex-anim-squats.ex-animating { animation-name: anim-squats; }
+
+/* Tuck jumps: bounce high */
+@keyframes anim-jumps {
+  0%, 100% { transform: translateY(0) scale(1); }
+  40% { transform: translateY(-18px) scale(1.05); }
+  60% { transform: translateY(-18px) scale(1.05); }
+}
+.ex-anim-jumps.ex-animating {
+  animation-name: anim-jumps;
+  animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Push-ups: tilt down and up */
+@keyframes anim-pushups {
+  0%, 100% { transform: rotate(0deg) translateY(0); }
+  50% { transform: rotate(3deg) translateY(6px); }
+}
+.ex-anim-pushups { transform-origin: right center; }
+.ex-anim-pushups.ex-animating { animation-name: anim-pushups; }
+
+/* Burpees: multi-phase squat then jump */
+@keyframes anim-burpees {
+  0% { transform: translateY(0) scaleY(1); }
+  25% { transform: translateY(8px) scaleY(0.92); }
+  50% { transform: translateY(-14px) scaleY(1.04); }
+  75% { transform: translateY(-14px) scaleY(1.04); }
+  100% { transform: translateY(0) scaleY(1); }
+}
+.ex-anim-burpees.ex-animating { animation-name: anim-burpees; }
+
+/* Jump squats: squat down then spring up */
+@keyframes anim-jump-squats {
+  0% { transform: translateY(0) scale(1); }
+  30% { transform: translateY(6px) scale(0.97); }
+  60% { transform: translateY(-16px) scale(1.05); }
+  80% { transform: translateY(-16px) scale(1.05); }
+  100% { transform: translateY(0) scale(1); }
+}
+.ex-anim-jump-squats.ex-animating { animation-name: anim-jump-squats; }
+
+/* Jumping jacks: spread/pulse scale */
+@keyframes anim-jumping-jacks {
+  0%, 100% { transform: scaleX(1) translateY(0); }
+  50% { transform: scaleX(1.06) translateY(-8px); }
+}
+.ex-anim-jumping-jacks.ex-animating { animation-name: anim-jumping-jacks; }
+
+/* Mountain climbers: rock side to side */
+@keyframes anim-mountain-climbers {
+  0%, 100% { transform: rotate(0deg) translateX(0); }
+  25% { transform: rotate(-2deg) translateX(-5px); }
+  75% { transform: rotate(2deg) translateX(5px); }
+}
+.ex-anim-mountain-climbers.ex-animating { animation-name: anim-mountain-climbers; }
+
+/* Hip bridges: lift upward */
+@keyframes anim-hip-bridges {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+.ex-anim-hip-bridges { transform-origin: center bottom; }
+.ex-anim-hip-bridges.ex-animating { animation-name: anim-hip-bridges; }
+
+/* Supermans: float and glide */
+@keyframes anim-supermans {
+  0%, 100% { transform: translateY(0) rotate(-1deg); }
+  50% { transform: translateY(-10px) rotate(1deg); }
+}
+.ex-anim-supermans.ex-animating { animation-name: anim-supermans; }
+
 /* Tappable card hover */
 .ex-card.ex-upcoming:hover,
 .ex-card.ex-done:hover {
