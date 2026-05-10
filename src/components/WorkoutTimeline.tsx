@@ -65,6 +65,7 @@ export function WorkoutTimeline({
   const barRef = useRef<HTMLDivElement>(null)
   const playheadRef = useRef<HTMLDivElement>(null)
   const draggingRef = useRef(false)
+  const lastDragIdxRef = useRef(-1)
 
   const durations = exercises.map(estimateExerciseDuration)
   const transitionTotal = (exercises.length - 1) * TRANSITION_SECONDS
@@ -152,7 +153,12 @@ export function WorkoutTimeline({
   const jumpToPointer = useCallback(
     (clientX: number) => {
       const idx = hitTest(clientX)
-      onSegmentTap(idx)
+      // Only jump if the exercise actually changed — avoids resetting
+      // the same exercise on every pointer move during a drag
+      if (idx !== lastDragIdxRef.current) {
+        lastDragIdxRef.current = idx
+        onSegmentTap(idx)
+      }
     },
     [hitTest, onSegmentTap],
   )
@@ -163,6 +169,7 @@ export function WorkoutTimeline({
       e.stopPropagation()
       e.preventDefault()
       draggingRef.current = true
+      lastDragIdxRef.current = -1
       playheadRef.current?.setPointerCapture(e.pointerId)
     },
     [],
@@ -178,6 +185,7 @@ export function WorkoutTimeline({
 
   const handlePlayheadUp = useCallback(() => {
     draggingRef.current = false
+    lastDragIdxRef.current = -1
   }, [])
 
   // Build segment data for rendering
