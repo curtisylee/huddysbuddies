@@ -31,7 +31,7 @@ function StarsIcon() {
 
 const items: { id: TabId; label: string; Icon: () => JSX.Element }[] = [
   { id: 'today', label: 'Today', Icon: TodayIcon },
-  { id: 'rewards', label: 'Trophies', Icon: RewardsIcon },
+  { id: 'rewards', label: 'Awards', Icon: RewardsIcon },
   { id: 'stars', label: 'Stars', Icon: StarsIcon },
 ]
 

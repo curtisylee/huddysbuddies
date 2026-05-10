@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
 import type { Exercise } from '../types'
-import { TeddyExercise } from './TeddyExercise'
 
 type Props = {
   exercise: Exercise
@@ -99,7 +98,11 @@ export function ExerciseCard({
         {expanded && (
           <div className="ex-expanded">
             <div className="ex-gif-wrap">
-              <TeddyExercise exerciseId={exercise.id} />
+              <img
+                className="ex-exercise-img"
+                src={`/exercises/${exercise.id}.png`}
+                alt={`${exercise.name} demonstration`}
+              />
             </div>
             <p className="ex-cue">{exercise.cue}</p>
           </div>

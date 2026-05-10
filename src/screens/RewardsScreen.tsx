@@ -22,7 +22,7 @@ export function RewardsScreen({
   return (
     <div className="screen scroll rewards">
       <header className="hero tight">
-        <p className="large-title">Trophies</p>
+        <p className="large-title">Awards</p>
         <p className="subtitle">Daily sparkle, weekly chests, and big milestones.</p>
       </header>
 
