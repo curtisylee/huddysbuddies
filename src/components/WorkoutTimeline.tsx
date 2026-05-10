@@ -1,4 +1,4 @@
-import { useCallback, useRef } from 'react'
+import { useCallback, useRef, useState } from 'react'
 import type { Exercise, WorkoutPhase } from '../types'
 import {
   TRANSITION_SECONDS,
@@ -66,6 +66,7 @@ export function WorkoutTimeline({
   const playheadRef = useRef<HTMLDivElement>(null)
   const draggingRef = useRef(false)
   const lastDragIdxRef = useRef(-1)
+  const [dragPct, setDragPct] = useState<number | null>(null)
 
   const durations = exercises.map(estimateExerciseDuration)
   const transitionTotal = (exercises.length - 1) * TRANSITION_SECONDS
@@ -152,6 +153,14 @@ export function WorkoutTimeline({
 
   const jumpToPointer = useCallback(
     (clientX: number) => {
+      // Visually move the playhead to follow the pointer
+      const bar = barRef.current
+      if (bar) {
+        const rect = bar.getBoundingClientRect()
+        const pct = Math.min(100, Math.max(0, ((clientX - rect.left) / rect.width) * 100))
+        setDragPct(pct)
+      }
+
       const idx = hitTest(clientX)
       // Only jump if the exercise actually changed — avoids resetting
       // the same exercise on every pointer move during a drag
@@ -186,6 +195,7 @@ export function WorkoutTimeline({
   const handlePlayheadUp = useCallback(() => {
     draggingRef.current = false
     lastDragIdxRef.current = -1
+    setDragPct(null)
   }, [])
 
   // Build segment data for rendering
@@ -266,7 +276,7 @@ export function WorkoutTimeline({
         <div
           ref={playheadRef}
           className={`timeline-playhead ${paused ? 'timeline-playhead-paused' : ''}`}
-          style={{ left: `${playheadPct}%` }}
+          style={{ left: `${dragPct ?? playheadPct}%` }}
           role="slider"
           aria-label="Scrub through workout"
           aria-valuenow={Math.round(playheadPct)}
