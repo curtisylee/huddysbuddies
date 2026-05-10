@@ -1,4 +1,4 @@
-import { useCallback, useLayoutEffect, useRef } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useRef } from 'react'
 import type { Exercise, WorkoutPhase } from '../types'
 import {
   TRANSITION_SECONDS,
@@ -151,57 +151,51 @@ export function WorkoutTimeline({
     [exercises.length, segStartPct, segWidthPct],
   )
 
-  const jumpToPointer = useCallback(
-    (clientX: number) => {
-      // Directly set the DOM style — bypasses React re-render so the
-      // playhead stays at the pointer position even when onSegmentTap
-      // triggers state updates that would otherwise snap it back.
-      const bar = barRef.current
-      if (bar) {
-        const rect = bar.getBoundingClientRect()
-        const pct = Math.min(100, Math.max(0, ((clientX - rect.left) / rect.width) * 100))
-        dragPctRef.current = pct
-        if (playheadRef.current) {
-          playheadRef.current.style.left = `${pct}%`
-        }
-      }
+  // Stable ref to latest callbacks so document listeners always use current versions
+  const hitTestRef = useRef(hitTest)
+  hitTestRef.current = hitTest
+  const onSegmentTapRef = useRef(onSegmentTap)
+  onSegmentTapRef.current = onSegmentTap
 
-      const idx = hitTest(clientX)
-      // Only jump if the exercise actually changed — avoids resetting
-      // the same exercise on every pointer move during a drag
-      if (idx !== lastDragIdxRef.current) {
-        lastDragIdxRef.current = idx
-        onSegmentTap(idx)
-      }
-    },
-    [hitTest, onSegmentTap],
-  )
-
-  // Drag starts only from the playhead itself
+  // Drag via document-level listeners — immune to pointercancel from scrolls
   const handlePlayheadDown = useCallback(
     (e: React.PointerEvent) => {
       e.stopPropagation()
       e.preventDefault()
       draggingRef.current = true
       lastDragIdxRef.current = -1
-      playheadRef.current?.setPointerCapture(e.pointerId)
+
+      const onMove = (ev: PointerEvent) => {
+        // Directly set DOM style — can't be overridden by React re-renders
+        const bar = barRef.current
+        if (bar) {
+          const rect = bar.getBoundingClientRect()
+          const pct = Math.min(100, Math.max(0, ((ev.clientX - rect.left) / rect.width) * 100))
+          dragPctRef.current = pct
+          if (playheadRef.current) {
+            playheadRef.current.style.left = `${pct}%`
+          }
+        }
+        const idx = hitTestRef.current(ev.clientX)
+        if (idx !== lastDragIdxRef.current) {
+          lastDragIdxRef.current = idx
+          onSegmentTapRef.current(idx)
+        }
+      }
+
+      const onUp = () => {
+        draggingRef.current = false
+        lastDragIdxRef.current = -1
+        dragPctRef.current = null
+        document.removeEventListener('pointermove', onMove)
+        document.removeEventListener('pointerup', onUp)
+      }
+
+      document.addEventListener('pointermove', onMove)
+      document.addEventListener('pointerup', onUp)
     },
     [],
   )
-
-  const handlePlayheadMove = useCallback(
-    (e: React.PointerEvent) => {
-      if (!draggingRef.current) return
-      jumpToPointer(e.clientX)
-    },
-    [jumpToPointer],
-  )
-
-  const handlePlayheadUp = useCallback(() => {
-    draggingRef.current = false
-    lastDragIdxRef.current = -1
-    dragPctRef.current = null
-  }, [])
 
   // After every render, if we're dragging, force the playhead to the drag
   // position. This prevents timer-driven re-renders from snapping it back.
@@ -210,6 +204,13 @@ export function WorkoutTimeline({
       playheadRef.current.style.left = `${dragPctRef.current}%`
     }
   })
+
+  // Cleanup document listeners if component unmounts during drag
+  useEffect(() => {
+    return () => {
+      draggingRef.current = false
+    }
+  }, [])
 
   // Build segment data for rendering
   type Segment = {
@@ -297,9 +298,6 @@ export function WorkoutTimeline({
           aria-valuemax={100}
           tabIndex={0}
           onPointerDown={handlePlayheadDown}
-          onPointerMove={handlePlayheadMove}
-          onPointerUp={handlePlayheadUp}
-          onPointerCancel={handlePlayheadUp}
         />
       </div>
 
