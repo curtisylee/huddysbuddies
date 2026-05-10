@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react'
+import { useCallback, useRef } from 'react'
 import type { Exercise, WorkoutPhase } from '../types'
 import {
   TRANSITION_SECONDS,
@@ -66,7 +66,7 @@ export function WorkoutTimeline({
   const playheadRef = useRef<HTMLDivElement>(null)
   const draggingRef = useRef(false)
   const lastDragIdxRef = useRef(-1)
-  const [dragPct, setDragPct] = useState<number | null>(null)
+  const dragPctRef = useRef<number | null>(null)
 
   const durations = exercises.map(estimateExerciseDuration)
   const transitionTotal = (exercises.length - 1) * TRANSITION_SECONDS
@@ -153,12 +153,17 @@ export function WorkoutTimeline({
 
   const jumpToPointer = useCallback(
     (clientX: number) => {
-      // Visually move the playhead to follow the pointer
+      // Directly set the DOM style — bypasses React re-render so the
+      // playhead stays at the pointer position even when onSegmentTap
+      // triggers state updates that would otherwise snap it back.
       const bar = barRef.current
       if (bar) {
         const rect = bar.getBoundingClientRect()
         const pct = Math.min(100, Math.max(0, ((clientX - rect.left) / rect.width) * 100))
-        setDragPct(pct)
+        dragPctRef.current = pct
+        if (playheadRef.current) {
+          playheadRef.current.style.left = `${pct}%`
+        }
       }
 
       const idx = hitTest(clientX)
@@ -195,7 +200,7 @@ export function WorkoutTimeline({
   const handlePlayheadUp = useCallback(() => {
     draggingRef.current = false
     lastDragIdxRef.current = -1
-    setDragPct(null)
+    dragPctRef.current = null
   }, [])
 
   // Build segment data for rendering
@@ -276,7 +281,7 @@ export function WorkoutTimeline({
         <div
           ref={playheadRef}
           className={`timeline-playhead ${paused ? 'timeline-playhead-paused' : ''}`}
-          style={{ left: `${dragPct ?? playheadPct}%` }}
+          style={{ left: `${draggingRef.current && dragPctRef.current !== null ? dragPctRef.current : playheadPct}%` }}
           role="slider"
           aria-label="Scrub through workout"
           aria-valuenow={Math.round(playheadPct)}
