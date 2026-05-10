@@ -1,3 +1,4 @@
+import { useCallback, useRef } from 'react'
 import type { Exercise, WorkoutPhase } from '../types'
 import {
   TRANSITION_SECONDS,
@@ -61,6 +62,9 @@ export function WorkoutTimeline({
   phaseSecondsLeft,
   onSegmentTap,
 }: Props) {
+  const barRef = useRef<HTMLDivElement>(null)
+  const draggingRef = useRef(false)
+
   const durations = exercises.map(estimateExerciseDuration)
   const transitionTotal = (exercises.length - 1) * TRANSITION_SECONDS
   const exerciseTotal = durations.reduce((a, b) => a + b, 0)
@@ -86,8 +90,6 @@ export function WorkoutTimeline({
   if (phase === 'complete') {
     playheadPct = 100
   } else if (phase === 'transition') {
-    // During transition, currentExerciseIndex still points to the just-completed exercise.
-    // Playhead should be in the gap after that segment.
     const idx = currentExerciseIndex
     const segEnd = segStartPct[idx]! + segWidthPct[idx]!
     const gapElapsed = TRANSITION_SECONDS - phaseSecondsLeft
@@ -107,7 +109,6 @@ export function WorkoutTimeline({
         prevSets * REST_BETWEEN_SETS_SECONDS +
         (setSeconds - phaseSecondsLeft)
     } else {
-      // exercising-rest: current set just finished, resting before next
       elapsed =
         currentSet * setSeconds +
         (currentSet - 1) * REST_BETWEEN_SETS_SECONDS +
@@ -118,6 +119,63 @@ export function WorkoutTimeline({
     playheadPct = segStartPct[idx]! + segWidthPct[idx]! * progress
   }
   playheadPct = Math.min(100, Math.max(0, playheadPct))
+
+  // Hit-test: convert a pointer X position to the nearest exercise index
+  const hitTest = useCallback(
+    (clientX: number): number => {
+      const bar = barRef.current
+      if (!bar) return 0
+      const rect = bar.getBoundingClientRect()
+      const pct = Math.min(100, Math.max(0, ((clientX - rect.left) / rect.width) * 100))
+
+      // Find which exercise segment this percentage falls in (or nearest to)
+      let closest = 0
+      let closestDist = Infinity
+      for (let i = 0; i < exercises.length; i++) {
+        const segStart = segStartPct[i]!
+        const segEnd = segStart + segWidthPct[i]!
+        // If inside the segment, return immediately
+        if (pct >= segStart && pct <= segEnd) return i
+        // Otherwise track closest segment
+        const dist = Math.min(Math.abs(pct - segStart), Math.abs(pct - segEnd))
+        if (dist < closestDist) {
+          closestDist = dist
+          closest = i
+        }
+      }
+      return closest
+    },
+    [exercises.length, segStartPct, segWidthPct],
+  )
+
+  const jumpToPointer = useCallback(
+    (clientX: number) => {
+      const idx = hitTest(clientX)
+      onSegmentTap(idx)
+    },
+    [hitTest, onSegmentTap],
+  )
+
+  const handlePointerDown = useCallback(
+    (e: React.PointerEvent) => {
+      draggingRef.current = true
+      ;(e.target as HTMLElement).setPointerCapture(e.pointerId)
+      jumpToPointer(e.clientX)
+    },
+    [jumpToPointer],
+  )
+
+  const handlePointerMove = useCallback(
+    (e: React.PointerEvent) => {
+      if (!draggingRef.current) return
+      jumpToPointer(e.clientX)
+    },
+    [jumpToPointer],
+  )
+
+  const handlePointerUp = useCallback(() => {
+    draggingRef.current = false
+  }, [])
 
   // Build segment data for rendering
   type Segment = {
@@ -159,8 +217,21 @@ export function WorkoutTimeline({
         )}
       </div>
 
-      {/* Bar */}
-      <div className="timeline-bar" role="group">
+      {/* Bar — entire bar is interactive for scrubbing */}
+      <div
+        ref={barRef}
+        className="timeline-bar"
+        role="slider"
+        aria-label="Scrub through workout"
+        aria-valuenow={Math.round(playheadPct)}
+        aria-valuemin={0}
+        aria-valuemax={100}
+        tabIndex={0}
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerUp}
+        onPointerCancel={handlePointerUp}
+      >
         {segments.map((s, i) => {
           if (s.exerciseIdx < 0) {
             return <div key={i} className="timeline-gap" style={{ flexBasis: `${s.widthPct}%` }} />
@@ -175,9 +246,8 @@ export function WorkoutTimeline({
               : 'timeline-seg timeline-seg-upcoming'
 
           return (
-            <button
+            <div
               key={i}
-              type="button"
               className={cls}
               style={
                 {
@@ -185,18 +255,12 @@ export function WorkoutTimeline({
                   '--seg-color': s.color,
                 } as React.CSSProperties
               }
-              onClick={(e) => {
-                e.stopPropagation()
-                onSegmentTap(idx)
-              }}
               title={exercises[idx]!.name}
-              aria-label={`Jump to ${exercises[idx]!.name}`}
-              aria-current={isActive ? 'true' : undefined}
             />
           )
         })}
 
-        {/* Playhead */}
+        {/* Playhead — draggable cursor */}
         <div
           className={`timeline-playhead ${paused ? 'timeline-playhead-paused' : ''}`}
           style={{ left: `${playheadPct}%` }}
