@@ -106,9 +106,11 @@ export function useWorkoutSession(
       lastVoiceSecRef.current = sec
       setPhase('exercising-set')
       say(announceExercise(ex))
-      encourage()
+      // Show encouragement as text only — speaking it would cancel the
+      // exercise announcement since speak() cancels previous speech
+      showPhrase(pickEncouragement())
     },
-    [exercises, say, encourage],
+    [exercises, say, showPhrase],
   )
 
   const finishExercise = useCallback(
@@ -126,14 +128,14 @@ export function useWorkoutSession(
       const nextEx = exercises[nextIdx]
       if (nextEx) {
         say(announceTransition(nextEx.name))
-        encourage()
+        showPhrase(pickEncouragement())
       }
       setPhase('transition')
       setPhaseSecondsLeft(TRANSITION_SECONDS)
       phaseEndRef.current = Date.now() + TRANSITION_SECONDS * 1000
       lastVoiceSecRef.current = TRANSITION_SECONDS
     },
-    [exercises, say, encourage],
+    [exercises, say, showPhrase],
   )
 
   const completeWorkout = useCallback(() => {
