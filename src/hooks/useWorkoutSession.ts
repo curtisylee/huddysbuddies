@@ -188,26 +188,29 @@ export function useWorkoutSession(
     const newPhase = Math.max(0, Math.ceil((phaseEndRef.current - now) / 1000))
     setPhaseSecondsLeft(newPhase)
 
+    // Rep counting — runs every tick (250ms) for sub-second accuracy
+    if (newPhase > 0 && p === 'exercising-set') {
+      const ex = exercises[currentExerciseIndexRef.current]
+      if (ex && ex.reps !== 'hold') {
+        const perRep = ex.secondsPerRep ?? SECONDS_PER_REP
+        const totalSetMs = computeSetSeconds(ex) * 1000
+        const elapsedMs = totalSetMs - (phaseEndRef.current - now)
+        const repNow = Math.floor(elapsedMs / (perRep * 1000))
+        if (repNow > lastRepRef.current && repNow > 0) {
+          lastRepRef.current = repNow
+          say(String(repNow))
+        }
+      }
+    }
+
     // Voice announcements — only when the second value actually changes
     if (newPhase > 0 && newPhase !== lastVoiceSecRef.current) {
       lastVoiceSecRef.current = newPhase
 
       if (p === 'exercising-set') {
         const ex = exercises[currentExerciseIndexRef.current]
-        if (ex) {
-          if (ex.reps === 'hold') {
-            say(String(newPhase))
-          } else {
-            // Compute current rep from elapsed time using per-exercise rate
-            const perRep = ex.secondsPerRep ?? SECONDS_PER_REP
-            const totalSetSeconds = computeSetSeconds(ex)
-            const elapsed = totalSetSeconds - newPhase
-            const repNow = Math.floor(elapsed / perRep)
-            if (repNow > lastRepRef.current && repNow > 0) {
-              lastRepRef.current = repNow
-              say(String(repNow))
-            }
-          }
+        if (ex && ex.reps === 'hold') {
+          say(String(newPhase))
         }
       }
 
