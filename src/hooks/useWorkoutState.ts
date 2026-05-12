@@ -5,8 +5,6 @@ import {
   getExercisesForDay,
   getLevel,
   PRIZES,
-  STARS_DAILY_BONUS,
-  STARS_PER_FULL_WORKOUT,
 } from '../data/program'
 import {
   computeStreak,
@@ -184,7 +182,7 @@ export function useWorkoutState(childName = 'Hudson') {
         if (!wasDayComplete && nowDayComplete) {
           if (!nextCompleted.includes(today)) {
             nextCompleted = uniqPush(nextCompleted, today)
-            stars += STARS_PER_FULL_WORKOUT + STARS_DAILY_BONUS
+            stars += todayExerciseIds.length
             totalFinished += 1
           }
         }
