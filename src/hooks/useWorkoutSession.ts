@@ -113,7 +113,7 @@ export function useWorkoutSession(
       const sec = computeSetSeconds(ex)
       setPhaseSecondsLeft(sec)
       phaseEndRef.current = Date.now() + sec * 1000
-      lastVoiceSecRef.current = sec
+      lastVoiceSecRef.current = sec + 1 // +1 so the first second is announced
       setPhase('exercising-set')
       lastRepRef.current = 0
       say(announceExercise(ex))
@@ -144,7 +144,7 @@ export function useWorkoutSession(
       setPhase('transition')
       setPhaseSecondsLeft(TRANSITION_SECONDS)
       phaseEndRef.current = Date.now() + TRANSITION_SECONDS * 1000
-      lastVoiceSecRef.current = TRANSITION_SECONDS
+      lastVoiceSecRef.current = TRANSITION_SECONDS + 1
     },
     [exercises, say, showPhrase],
   )
@@ -230,7 +230,7 @@ export function useWorkoutSession(
         setPhase('exercising-rest')
         setPhaseSecondsLeft(REST_BETWEEN_SETS_SECONDS)
         phaseEndRef.current = now + REST_BETWEEN_SETS_SECONDS * 1000
-        lastVoiceSecRef.current = REST_BETWEEN_SETS_SECONDS
+        lastVoiceSecRef.current = REST_BETWEEN_SETS_SECONDS + 1
         say(announceSetRest(curSet + 1))
       } else {
         // Exercise fully done
@@ -250,7 +250,7 @@ export function useWorkoutSession(
         setPhaseSecondsLeft(sec)
         setPhase('exercising-set')
         phaseEndRef.current = now + sec * 1000
-        lastVoiceSecRef.current = sec
+        lastVoiceSecRef.current = sec + 1 // +1 so the first second is announced
         lastRepRef.current = 0
         say(announceSetStart(nextSet))
       }
