@@ -27,10 +27,10 @@ export function cancelSpeech(): void {
   }
 }
 
-export function speak(text: string, enabled: boolean): void {
+export function speak(text: string, enabled: boolean, cancel = true): void {
   if (!enabled || typeof window === 'undefined' || !window.speechSynthesis) return
   try {
-    window.speechSynthesis.cancel()
+    if (cancel) window.speechSynthesis.cancel()
     const u = new SpeechSynthesisUtterance(text)
     u.rate = 0.95
     u.pitch = 0.85

@@ -97,6 +97,11 @@ export function useWorkoutSession(
     speak(text, voiceEnabledRef.current)
   }, [])
 
+  // Speak without cancelling previous speech — used for rep/hold/rest counts
+  const count = useCallback((text: string) => {
+    speak(text, voiceEnabledRef.current, false)
+  }, [])
+
   // Show encouragement on screen AND speak it aloud
   const encourage = useCallback(() => {
     const phrase = pickEncouragement()
@@ -189,7 +194,8 @@ export function useWorkoutSession(
     setPhaseSecondsLeft(newPhase)
 
     // Rep counting — runs every tick (250ms) for sub-second accuracy
-    if (newPhase > 0 && p === 'exercising-set') {
+    // No newPhase > 0 guard: the final rep lands exactly when the phase expires
+    if (p === 'exercising-set') {
       const ex = exercises[currentExerciseIndexRef.current]
       if (ex && ex.reps !== 'hold') {
         const perRep = ex.secondsPerRep ?? SECONDS_PER_REP
@@ -198,7 +204,7 @@ export function useWorkoutSession(
         const repNow = Math.floor(elapsedMs / (perRep * 1000))
         if (repNow > lastRepRef.current && repNow > 0) {
           lastRepRef.current = repNow
-          say(String(repNow))
+          count(String(repNow))
         }
       }
     }
@@ -210,12 +216,12 @@ export function useWorkoutSession(
       if (p === 'exercising-set') {
         const ex = exercises[currentExerciseIndexRef.current]
         if (ex && ex.reps === 'hold') {
-          say(String(newPhase))
+          count(String(newPhase))
         }
       }
 
       if (p === 'exercising-rest' && newPhase <= 5) {
-        say(announceRestCountdown(newPhase))
+        count(announceRestCountdown(newPhase))
       }
     }
 
@@ -227,25 +233,25 @@ export function useWorkoutSession(
     const ex = exercises[curIdx]
 
     if (p === 'exercising-set') {
-      // Set finished
+      // Set finished — delay announcement so the last count finishes speaking
       if (ex && curSet < ex.sets) {
         // More sets remaining — rest between sets
         setPhase('exercising-rest')
         setPhaseSecondsLeft(REST_BETWEEN_SETS_SECONDS)
         phaseEndRef.current = now + REST_BETWEEN_SETS_SECONDS * 1000
         lastVoiceSecRef.current = REST_BETWEEN_SETS_SECONDS + 1
-        say(announceSetRest(curSet + 1))
+        setTimeout(() => say(announceSetRest(curSet + 1)), 500)
       } else {
         // Exercise fully done
         finishExercise(curIdx)
         if (curIdx < exercises.length - 1) {
-          startTransition(curIdx + 1)
+          setTimeout(() => startTransition(curIdx + 1), 500)
         } else {
-          completeWorkout()
+          setTimeout(() => completeWorkout(), 500)
         }
       }
     } else if (p === 'exercising-rest') {
-      // Rest over — start next set
+      // Rest over — start next set, delay so last countdown finishes
       const nextSet = curSet + 1
       setCurrentSet(nextSet)
       if (ex) {
@@ -255,7 +261,7 @@ export function useWorkoutSession(
         phaseEndRef.current = now + sec * 1000
         lastVoiceSecRef.current = sec + 1 // +1 so the first second is announced
         lastRepRef.current = 0
-        say(announceSetStart(nextSet))
+        setTimeout(() => say(announceSetStart(nextSet)), 500)
       }
     } else if (p === 'transition') {
       // Transition over — start next exercise
@@ -266,7 +272,7 @@ export function useWorkoutSession(
         completeWorkout()
       }
     }
-  }, [exercises, onExerciseComplete, say, finishExercise, startTransition, startExercise, completeWorkout])
+  }, [exercises, onExerciseComplete, say, count, finishExercise, startTransition, startExercise, completeWorkout])
 
   // Use a ref so the worker always calls the latest tick
   const tickRef = useRef(tick)

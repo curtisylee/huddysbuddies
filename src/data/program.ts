@@ -143,7 +143,7 @@ export const EXERCISE_DEFS: ExerciseDefinition[] = [
     id: 'mountain-climbers',
     name: 'Mountain climbers',
     type: 'reps',
-    baseValue: 16,
+    baseValue: 20,
     increment: 4,
     secondsPerRep: 0.75,
     cue: 'Drive those knees — fast feet, stable hands.',
