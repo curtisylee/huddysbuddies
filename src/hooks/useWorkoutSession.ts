@@ -30,7 +30,8 @@ function computeSetSeconds(exercise: Exercise): number {
     return exercise.holdSeconds ?? 20
   }
   const perRep = exercise.secondsPerRep ?? SECONDS_PER_REP
-  return Math.round((exercise.reps as number) * perRep)
+  // +1 buffer so the final rep is never clipped by timing jitter
+  return Math.ceil((exercise.reps as number) * perRep) + 1
 }
 
 export function useWorkoutSession(
@@ -199,9 +200,10 @@ export function useWorkoutSession(
       const ex = exercises[currentExerciseIndexRef.current]
       if (ex && ex.reps !== 'hold') {
         const perRep = ex.secondsPerRep ?? SECONDS_PER_REP
+        const target = ex.reps as number
         const totalSetMs = computeSetSeconds(ex) * 1000
         const elapsedMs = totalSetMs - (phaseEndRef.current - now)
-        const repNow = Math.floor(elapsedMs / (perRep * 1000))
+        const repNow = Math.min(target, Math.floor(elapsedMs / (perRep * 1000)))
         if (repNow > lastRepRef.current && repNow > 0) {
           lastRepRef.current = repNow
           count(String(repNow))

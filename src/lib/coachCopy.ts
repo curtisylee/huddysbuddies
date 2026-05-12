@@ -63,6 +63,7 @@ export function announceSetRest(_nextSetNumber: number): string {
 }
 
 export function announceRestCountdown(secondsLeft: number): string {
+  if (secondsLeft === 5) return 'New set starting in 5'
   return String(secondsLeft)
 }
 

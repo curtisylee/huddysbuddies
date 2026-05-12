@@ -30,7 +30,7 @@ type Props = {
 function computeSetSeconds(ex: Exercise): number {
   if (ex.reps === 'hold') return ex.holdSeconds ?? 20
   const perRep = ex.secondsPerRep ?? SECONDS_PER_REP
-  return Math.round((ex.reps as number) * perRep)
+  return Math.ceil((ex.reps as number) * perRep) + 1
 }
 
 function estimateExerciseDuration(ex: Exercise): number {
