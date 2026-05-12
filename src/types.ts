@@ -7,6 +7,8 @@ export type ExerciseDefinition = {
   baseValue: number
   /** How much to add per level */
   increment: number
+  /** Override seconds per rep (default SECONDS_PER_REP) */
+  secondsPerRep?: number
   cue: string
   steps: string[]
   /** Path to animated GIF demo */
@@ -21,6 +23,8 @@ export type Exercise = {
   reps: number | 'hold'
   /** Seconds per hold when reps === 'hold' */
   holdSeconds?: number
+  /** Override seconds per rep (default SECONDS_PER_REP) */
+  secondsPerRep?: number
   cue: string
   steps: string[]
   gifUrl: string

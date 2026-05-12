@@ -1,4 +1,6 @@
+import { useEffect, useRef, useState } from 'react'
 import { CoachPanel } from '../components/CoachPanel'
+import { CompletionCelebration } from '../components/CompletionCelebration'
 import { ExerciseCard } from '../components/ExerciseCard'
 import { WorkoutControls } from '../components/WorkoutControls'
 import { WorkoutTimeline } from '../components/WorkoutTimeline'
@@ -31,6 +33,15 @@ export function TodayScreen({
   exercises,
 }: Props) {
   const session = useWorkoutSession(exercises, voiceEnabled, childName, onToggle)
+  const [showCelebration, setShowCelebration] = useState(false)
+  const prevPhaseRef = useRef(session.phase)
+
+  useEffect(() => {
+    if (session.phase === 'complete' && prevPhaseRef.current !== 'complete') {
+      setShowCelebration(true)
+    }
+    prevPhaseRef.current = session.phase
+  }, [session.phase])
 
   function exerciseStatus(idx: number): 'upcoming' | 'active' | 'done' {
     if (session.completedIds.includes(exercises[idx]!.id) || doneToday.has(exercises[idx]!.id)) {
@@ -134,6 +145,14 @@ export function TodayScreen({
           ))}
         </div>
       </section>
+
+      {showCelebration && (
+        <CompletionCelebration
+          childName={childName}
+          starsEarned={exercises.length}
+          onDismiss={() => setShowCelebration(false)}
+        />
+      )}
     </div>
   )
 }

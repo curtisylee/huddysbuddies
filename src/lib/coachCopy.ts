@@ -97,6 +97,9 @@ export const ENCOURAGEMENT_PHRASES: string[] = [
   'unstoppable!',
   'Teddy believes in you!',
   'feel the burn!',
+  "you're a beast!",
+  "you're a savage",
+  'do you even lift bro?',
 ]
 
 export function pickEncouragement(): string {

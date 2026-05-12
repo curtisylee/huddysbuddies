@@ -18,11 +18,19 @@ import {
   pickEncouragement,
 } from '../lib/coachCopy'
 
+// Inline Web Worker — not throttled in background tabs unlike setInterval
+function createTickerWorker(intervalMs: number): Worker {
+  const code = `let id=null;self.onmessage=e=>{if(e.data==='start'){if(id)clearInterval(id);id=setInterval(()=>self.postMessage('t'),${intervalMs})}else if(e.data==='stop'){if(id){clearInterval(id);id=null}}}`
+  const blob = new Blob([code], { type: 'application/javascript' })
+  return new Worker(URL.createObjectURL(blob))
+}
+
 function computeSetSeconds(exercise: Exercise): number {
   if (exercise.reps === 'hold') {
     return exercise.holdSeconds ?? 20
   }
-  return (exercise.reps as number) * SECONDS_PER_REP
+  const perRep = exercise.secondsPerRep ?? SECONDS_PER_REP
+  return Math.round((exercise.reps as number) * perRep)
 }
 
 export function useWorkoutSession(
@@ -40,7 +48,7 @@ export function useWorkoutSession(
   const [completedIds, setCompletedIds] = useState<string[]>([])
   const [currentPhrase, setCurrentPhrase] = useState<string | null>(null)
 
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const workerRef = useRef<Worker | null>(null)
   const phraseClearRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   // Refs to access latest state in the interval callback
@@ -56,6 +64,7 @@ export function useWorkoutSession(
   const phaseEndRef = useRef(0)   // Date.now() when current phase expires
   const pauseStartRef = useRef(0) // Date.now() when pause started
   const lastVoiceSecRef = useRef(-1) // last phase second we announced (dedup)
+  const lastRepRef = useRef(0)      // last rep number we announced
 
   phaseRef.current = phase
   pausedRef.current = paused
@@ -65,9 +74,10 @@ export function useWorkoutSession(
   voiceEnabledRef.current = voiceEnabled
 
   const clearTimer = useCallback(() => {
-    if (intervalRef.current) {
-      clearInterval(intervalRef.current)
-      intervalRef.current = null
+    if (workerRef.current) {
+      workerRef.current.postMessage('stop')
+      workerRef.current.terminate()
+      workerRef.current = null
     }
   }, [])
 
@@ -105,6 +115,7 @@ export function useWorkoutSession(
       phaseEndRef.current = Date.now() + sec * 1000
       lastVoiceSecRef.current = sec
       setPhase('exercising-set')
+      lastRepRef.current = 0
       say(announceExercise(ex))
       // Show encouragement as text only — speaking it would cancel the
       // exercise announcement since speak() cancels previous speech
@@ -185,17 +196,16 @@ export function useWorkoutSession(
         const ex = exercises[currentExerciseIndexRef.current]
         if (ex) {
           if (ex.reps === 'hold') {
-            if (newPhase === 20 || newPhase === 15 || newPhase === 10) {
-              say(String(newPhase))
-            } else if (newPhase <= 5) {
-              say(String(newPhase))
-            }
+            say(String(newPhase))
           } else {
+            // Compute current rep from elapsed time using per-exercise rate
+            const perRep = ex.secondsPerRep ?? SECONDS_PER_REP
             const totalSetSeconds = computeSetSeconds(ex)
             const elapsed = totalSetSeconds - newPhase
-            if (elapsed > 0 && elapsed % SECONDS_PER_REP === 0) {
-              const repNum = elapsed / SECONDS_PER_REP
-              say(String(repNum))
+            const repNow = Math.floor(elapsed / perRep)
+            if (repNow > lastRepRef.current && repNow > 0) {
+              lastRepRef.current = repNow
+              say(String(repNow))
             }
           }
         }
@@ -241,6 +251,7 @@ export function useWorkoutSession(
         setPhase('exercising-set')
         phaseEndRef.current = now + sec * 1000
         lastVoiceSecRef.current = sec
+        lastRepRef.current = 0
         say(announceSetStart(nextSet))
       }
     } else if (p === 'transition') {
@@ -254,21 +265,17 @@ export function useWorkoutSession(
     }
   }, [exercises, onExerciseComplete, say, finishExercise, startTransition, startExercise, completeWorkout])
 
-  // Catch up immediately when the tab becomes visible again
-  useEffect(() => {
-    const handleVisibility = () => {
-      if (document.visibilityState === 'visible' && !pausedRef.current) {
-        tick()
-      }
-    }
-    document.addEventListener('visibilitychange', handleVisibility)
-    return () => document.removeEventListener('visibilitychange', handleVisibility)
-  }, [tick])
+  // Use a ref so the worker always calls the latest tick
+  const tickRef = useRef(tick)
+  tickRef.current = tick
 
   const startTimer = useCallback(() => {
     clearTimer()
-    intervalRef.current = setInterval(tick, 1000)
-  }, [clearTimer, tick])
+    const w = createTickerWorker(250)
+    w.onmessage = () => tickRef.current()
+    w.postMessage('start')
+    workerRef.current = w
+  }, [clearTimer])
 
   const start = useCallback(() => {
     setTotalSecondsLeft(TOTAL_WORKOUT_SECONDS)

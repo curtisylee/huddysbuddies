@@ -145,6 +145,7 @@ export const EXERCISE_DEFS: ExerciseDefinition[] = [
     type: 'reps',
     baseValue: 16,
     increment: 4,
+    secondsPerRep: 1.5,
     cue: 'Drive those knees — fast feet, stable hands.',
     steps: [
       'Start in a push-up position, hands under shoulders.',
@@ -260,6 +261,7 @@ function buildExercise(def: ExerciseDefinition, level: number): Exercise {
     cue: def.cue,
     steps: def.steps,
     gifUrl: def.gifUrl,
+    ...(def.secondsPerRep !== undefined && { secondsPerRep: def.secondsPerRep }),
   }
 
   if (def.type === 'time') {

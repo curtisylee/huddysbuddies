@@ -108,7 +108,7 @@ export function ExerciseCard({
                 style={
                   status === 'active' && phaseLabel?.startsWith('Set')
                     ? ({
-                        '--anim-dur': `${exercise.reps === 'hold' ? 3 : SECONDS_PER_REP}s`,
+                        '--anim-dur': `${exercise.reps === 'hold' ? 3 : (exercise.secondsPerRep ?? SECONDS_PER_REP)}s`,
                       } as React.CSSProperties)
                     : undefined
                 }
