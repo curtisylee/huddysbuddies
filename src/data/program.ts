@@ -145,7 +145,7 @@ export const EXERCISE_DEFS: ExerciseDefinition[] = [
     type: 'reps',
     baseValue: 16,
     increment: 4,
-    secondsPerRep: 1.5,
+    secondsPerRep: 0.75,
     cue: 'Drive those knees — fast feet, stable hands.',
     steps: [
       'Start in a push-up position, hands under shoulders.',
