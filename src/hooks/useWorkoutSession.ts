@@ -103,13 +103,6 @@ export function useWorkoutSession(
     speak(text, voiceEnabledRef.current, false)
   }, [])
 
-  // Show encouragement on screen AND speak it aloud
-  const encourage = useCallback(() => {
-    const phrase = pickEncouragement()
-    showPhrase(phrase)
-    say(phrase)
-  }, [showPhrase, say])
-
   const startExercise = useCallback(
     (idx: number) => {
       const ex = exercises[idx]

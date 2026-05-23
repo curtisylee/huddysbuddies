@@ -29,7 +29,7 @@ function StarsIcon() {
   )
 }
 
-const items: { id: TabId; label: string; Icon: () => JSX.Element }[] = [
+const items: { id: TabId; label: string; Icon: () => React.JSX.Element }[] = [
   { id: 'today', label: 'Today', Icon: TodayIcon },
   { id: 'rewards', label: 'Awards', Icon: RewardsIcon },
   { id: 'stars', label: 'Stars', Icon: StarsIcon },
