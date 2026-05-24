@@ -66,6 +66,8 @@ export function useWorkoutSession(
   const pauseStartRef = useRef(0) // Date.now() when pause started
   const lastVoiceSecRef = useRef(-1) // last phase second we announced (dedup)
   const lastRepRef = useRef(0)      // last rep number we announced
+  const exerciseStartRef = useRef(0) // when current exercise started (for hold delay)
+  const finishedIdsRef = useRef(new Set<string>()) // guard against double-finish
 
   phaseRef.current = phase
   pausedRef.current = paused
@@ -115,6 +117,7 @@ export function useWorkoutSession(
       lastVoiceSecRef.current = sec + 1 // +1 so the first second is announced
       setPhase('exercising-set')
       lastRepRef.current = 0
+      exerciseStartRef.current = Date.now()
       say(announceExercise(ex))
       // Show encouragement as text only — speaking it would cancel the
       // exercise announcement since speak() cancels previous speech
@@ -127,6 +130,8 @@ export function useWorkoutSession(
     (idx: number) => {
       const ex = exercises[idx]
       if (!ex) return
+      if (finishedIdsRef.current.has(ex.id)) return
+      finishedIdsRef.current.add(ex.id)
       onExerciseComplete(ex.id)
       setCompletedIds((prev) => [...prev, ex.id])
     },
@@ -211,7 +216,11 @@ export function useWorkoutSession(
       if (p === 'exercising-set') {
         const ex = exercises[currentExerciseIndexRef.current]
         if (ex && ex.reps === 'hold') {
-          count(String(newPhase))
+          // Delay voice counting 3s so the exercise announcement finishes first
+          const elapsed = now - exerciseStartRef.current
+          if (elapsed >= 3000) {
+            count(String(newPhase))
+          }
         }
       }
 
@@ -256,6 +265,7 @@ export function useWorkoutSession(
         phaseEndRef.current = now + sec * 1000
         lastVoiceSecRef.current = sec + 1 // +1 so the first second is announced
         lastRepRef.current = 0
+        exerciseStartRef.current = now // reset for hold counting delay
         setTimeout(() => say(announceSetStart(nextSet)), 500)
       }
     } else if (p === 'transition') {
@@ -284,6 +294,7 @@ export function useWorkoutSession(
   const start = useCallback(() => {
     setTotalSecondsLeft(TOTAL_WORKOUT_SECONDS)
     setCompletedIds([])
+    finishedIdsRef.current.clear()
     setPaused(false)
     setCurrentPhrase(null)
     say(announceWorkoutStart(childName))

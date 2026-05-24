@@ -131,6 +131,7 @@ export const EXERCISE_DEFS: ExerciseDefinition[] = [
     type: 'reps',
     baseValue: 20,
     increment: 5,
+    secondsPerRep: 0.5,
     cue: 'Arms and legs out, then back — keep a rhythm.',
     steps: [
       'Stand with feet together, arms by your sides.',
