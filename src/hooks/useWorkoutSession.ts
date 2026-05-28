@@ -155,12 +155,14 @@ export function useWorkoutSession(
 
   const completeWorkout = useCallback(() => {
     clearTimer()
+    // Mark every exercise done so stars are always awarded
+    exercises.forEach((_, i) => finishExercise(i))
     setPhase('complete')
     say(announceWorkoutComplete(childName))
     const phrase = 'you are a champion!'
     showPhrase(phrase)
     say(phrase)
-  }, [clearTimer, say, childName, showPhrase])
+  }, [clearTimer, exercises, finishExercise, say, childName, showPhrase])
 
   const tick = useCallback(() => {
     if (pausedRef.current) return
@@ -175,15 +177,7 @@ export function useWorkoutSession(
     setTotalSecondsLeft(newTotal)
 
     if (newTotal <= 0) {
-      // Mark current exercise done if in progress
-      const curIdx = currentExerciseIndexRef.current
-      if (p === 'exercising-set' || p === 'exercising-rest') {
-        const ex = exercises[curIdx]
-        if (ex && !completedIdsRef.current.includes(ex.id)) {
-          onExerciseComplete(ex.id)
-          setCompletedIds((prev) => [...prev, ex.id])
-        }
-      }
+      // completeWorkout finishes all remaining exercises before ending
       completeWorkout()
       return
     }

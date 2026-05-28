@@ -169,8 +169,10 @@ export function useWorkoutState(childName = 'Hudson') {
     (exerciseId: string) => {
       setState((prev) => {
         const cur = prev.progressByDate[today] ?? []
-        const has = cur.includes(exerciseId)
-        const nextList = has ? cur.filter((x) => x !== exerciseId) : uniqPush([...cur], exerciseId)
+        // Only add — never remove. The guided workout calls this for each
+        // completed exercise; toggling off would break star awarding.
+        if (cur.includes(exerciseId)) return prev
+        const nextList = uniqPush([...cur], exerciseId)
 
         let nextCompleted = [...prev.completedDates]
         let stars = prev.stars
@@ -185,10 +187,6 @@ export function useWorkoutState(childName = 'Hudson') {
             stars += todayExerciseIds.length
             totalFinished += 1
           }
-        }
-
-        if (wasDayComplete && !nowDayComplete) {
-          nextCompleted = nextCompleted.filter((d) => d !== today)
         }
 
         return {
