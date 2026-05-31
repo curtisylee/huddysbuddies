@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 
 type Props = {
   childName: string
@@ -63,21 +63,21 @@ function playCheerSound() {
   }
 }
 
+function createConfetti(): Piece[] {
+  return Array.from({ length: CONFETTI_COUNT }, () => ({
+    left: Math.random() * 100,
+    delay: Math.random() * 2,
+    duration: 2 + Math.random() * 3,
+    color: CONFETTI_COLORS[Math.floor(Math.random() * CONFETTI_COLORS.length)]!,
+    size: 6 + Math.random() * 8,
+    rotation: Math.random() * 360,
+    shape: (['square', 'circle', 'strip'] as const)[Math.floor(Math.random() * 3)]!,
+  }))
+}
+
 export function CompletionCelebration({ childName, starsEarned, onDismiss }: Props) {
   const [showModal, setShowModal] = useState(false)
-
-  const confetti = useMemo<Piece[]>(() =>
-    Array.from({ length: CONFETTI_COUNT }, () => ({
-      left: Math.random() * 100,
-      delay: Math.random() * 2,
-      duration: 2 + Math.random() * 3,
-      color: CONFETTI_COLORS[Math.floor(Math.random() * CONFETTI_COLORS.length)]!,
-      size: 6 + Math.random() * 8,
-      rotation: Math.random() * 360,
-      shape: (['square', 'circle', 'strip'] as const)[Math.floor(Math.random() * 3)]!,
-    })),
-    [],
-  )
+  const [confetti] = useState(createConfetti)
 
   useEffect(() => {
     playCheerSound()

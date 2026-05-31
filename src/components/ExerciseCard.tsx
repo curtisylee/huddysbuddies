@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useLayoutEffect, useRef, useState } from 'react'
 import type { Exercise } from '../types'
 import { SECONDS_PER_REP } from '../data/program'
 
@@ -36,13 +36,12 @@ export function ExerciseCard({
   paused,
   onJumpTo,
 }: Props) {
-  const [expanded, setExpanded] = useState(false)
+  const [manualExpanded, setManualExpanded] = useState(false)
   const cardRef = useRef<HTMLElement>(null)
+  const expanded = status === 'active' || manualExpanded
 
-  // Auto-expand and scroll into view when active
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (status === 'active') {
-      setExpanded(true)
       cardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
     }
   }, [status])
@@ -51,7 +50,7 @@ export function ExerciseCard({
     if (status === 'active' && onJumpTo) {
       onJumpTo()
     } else {
-      setExpanded((o) => !o)
+      setManualExpanded((o) => !o)
     }
   }
 

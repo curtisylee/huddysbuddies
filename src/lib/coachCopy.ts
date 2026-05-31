@@ -58,8 +58,8 @@ export function announceTransition(nextExerciseName: string): string {
   return phrases[Math.floor(Math.random() * phrases.length)]!
 }
 
-export function announceSetRest(_nextSetNumber: number): string {
-  return `Take a breather. You have earned it.`
+export function announceSetRest(nextSetNumber: number): string {
+  return `Take a breather. Set ${nextSetNumber} is next when you're ready.`
 }
 
 export function announceRestCountdown(secondsLeft: number): string {

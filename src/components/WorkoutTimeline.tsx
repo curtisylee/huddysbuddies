@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useLayoutEffect, useRef } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef } from 'react'
 import type { Exercise, WorkoutPhase } from '../types'
 import {
   TRANSITION_SECONDS,
@@ -68,25 +68,28 @@ export function WorkoutTimeline({
   const lastDragIdxRef = useRef(-1)
   const dragPctRef = useRef<number | null>(null)
 
-  const durations = exercises.map(estimateExerciseDuration)
-  const transitionTotal = (exercises.length - 1) * TRANSITION_SECONDS
-  const exerciseTotal = durations.reduce((a, b) => a + b, 0)
-  const totalEstimated = exerciseTotal + transitionTotal
-  const gapWidthPct = exercises.length > 1 ? (TRANSITION_SECONDS / totalEstimated) * 100 : 0
+  const { durations, segStartPct, segWidthPct, gapWidthPct } = useMemo(() => {
+    const durs = exercises.map(estimateExerciseDuration)
+    const transitionTotal = (exercises.length - 1) * TRANSITION_SECONDS
+    const exerciseTotal = durs.reduce((a, b) => a + b, 0)
+    const totalEstimated = exerciseTotal + transitionTotal
+    const gap = exercises.length > 1 ? (TRANSITION_SECONDS / totalEstimated) * 100 : 0
 
-  // Compute cumulative start position for each exercise segment
-  const segStartPct: number[] = []
-  const segWidthPct: number[] = []
-  let cum = 0
-  for (let i = 0; i < exercises.length; i++) {
-    segStartPct.push(cum)
-    const w = (durations[i]! / totalEstimated) * 100
-    segWidthPct.push(w)
-    cum += w
-    if (i < exercises.length - 1) {
-      cum += gapWidthPct
+    const starts: number[] = []
+    const widths: number[] = []
+    let cum = 0
+    for (let i = 0; i < exercises.length; i++) {
+      starts.push(cum)
+      const w = (durs[i]! / totalEstimated) * 100
+      widths.push(w)
+      cum += w
+      if (i < exercises.length - 1) {
+        cum += gap
+      }
     }
-  }
+
+    return { durations: durs, segStartPct: starts, segWidthPct: widths, gapWidthPct: gap }
+  }, [exercises])
 
   // Compute playhead position based on current exercise progress
   let playheadPct = 0
@@ -104,19 +107,19 @@ export function WorkoutTimeline({
     const setSeconds = computeSetSeconds(ex)
     const totalDur = durations[idx]!
 
-    let elapsed = 0
-    if (phase === 'exercising-set') {
-      const prevSets = currentSet - 1
-      elapsed =
-        prevSets * setSeconds +
-        prevSets * REST_BETWEEN_SETS_SECONDS +
-        (setSeconds - phaseSecondsLeft)
-    } else {
-      elapsed =
-        currentSet * setSeconds +
-        (currentSet - 1) * REST_BETWEEN_SETS_SECONDS +
-        (REST_BETWEEN_SETS_SECONDS - phaseSecondsLeft)
-    }
+    const elapsed =
+      phase === 'exercising-set'
+        ? (() => {
+            const prevSets = currentSet - 1
+            return (
+              prevSets * setSeconds +
+              prevSets * REST_BETWEEN_SETS_SECONDS +
+              (setSeconds - phaseSecondsLeft)
+            )
+          })()
+        : currentSet * setSeconds +
+          (currentSet - 1) * REST_BETWEEN_SETS_SECONDS +
+          (REST_BETWEEN_SETS_SECONDS - phaseSecondsLeft)
 
     const progress = Math.min(1, elapsed / totalDur)
     playheadPct = segStartPct[idx]! + segWidthPct[idx]! * progress
@@ -151,11 +154,13 @@ export function WorkoutTimeline({
     [exercises.length, segStartPct, segWidthPct],
   )
 
-  // Stable ref to latest callbacks so document listeners always use current versions
   const hitTestRef = useRef(hitTest)
-  hitTestRef.current = hitTest
   const onSegmentTapRef = useRef(onSegmentTap)
-  onSegmentTapRef.current = onSegmentTap
+
+  useLayoutEffect(() => {
+    hitTestRef.current = hitTest
+    onSegmentTapRef.current = onSegmentTap
+  })
 
   // Drag via document-level listeners — immune to pointercancel from scrolls
   const handlePlayheadDown = useCallback(

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import type { Exercise, WorkoutPhase } from '../types'
 import {
   TOTAL_WORKOUT_SECONDS,
@@ -68,13 +68,6 @@ export function useWorkoutSession(
   const lastRepRef = useRef(0)      // last rep number we announced
   const exerciseStartRef = useRef(0) // when current exercise started (for hold delay)
   const finishedIdsRef = useRef(new Set<string>()) // guard against double-finish
-
-  phaseRef.current = phase
-  pausedRef.current = paused
-  currentExerciseIndexRef.current = currentExerciseIndex
-  currentSetRef.current = currentSet
-  completedIdsRef.current = completedIds
-  voiceEnabledRef.current = voiceEnabled
 
   const clearTimer = useCallback(() => {
     if (workerRef.current) {
@@ -271,11 +264,19 @@ export function useWorkoutSession(
         completeWorkout()
       }
     }
-  }, [exercises, onExerciseComplete, say, count, finishExercise, startTransition, startExercise, completeWorkout])
+  }, [exercises, say, count, finishExercise, startTransition, startExercise, completeWorkout])
 
-  // Use a ref so the worker always calls the latest tick
   const tickRef = useRef(tick)
-  tickRef.current = tick
+
+  useLayoutEffect(() => {
+    phaseRef.current = phase
+    pausedRef.current = paused
+    currentExerciseIndexRef.current = currentExerciseIndex
+    currentSetRef.current = currentSet
+    completedIdsRef.current = completedIds
+    voiceEnabledRef.current = voiceEnabled
+    tickRef.current = tick
+  })
 
   const startTimer = useCallback(() => {
     clearTimer()

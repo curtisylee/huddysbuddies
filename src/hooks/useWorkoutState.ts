@@ -12,6 +12,7 @@ import {
   countCompletedInWeek,
   dateKey,
   monthKey,
+  parseDateKey,
   weekStartKey,
 } from '../lib/dates'
 import { loadStoredState, saveStoredState } from '../lib/storage'
@@ -137,13 +138,13 @@ export function useWorkoutState(childName = 'Hudson') {
   }, [state])
 
   const today = dateKey()
-  const dayOfWeek = new Date().getDay()
 
   // Progression: level increases every 14 completed workouts
   const level = getLevel(state.totalFinishedWorkouts)
   const weekNumber = Math.ceil(level * 2 - 1) // approximate week display
 
-  // Today's schedule and exercises
+  // Today's schedule and exercises (keyed on `today` so midnight rollover refreshes)
+  const dayOfWeek = useMemo(() => parseDateKey(today).getDay(), [today])
   const daySchedule = getDaySchedule(dayOfWeek)
   const todayExerciseIds = getExerciseIdsForDay(dayOfWeek)
   const todayExercises = useMemo(
